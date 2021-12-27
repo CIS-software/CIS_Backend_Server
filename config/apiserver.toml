@@ -1,0 +1,3 @@
+bind_addr = ":8080"
+log_level = "debug"
+database_url = "postgres://postgres:Jad108fsdlknzc@localhost:5432/postgres?sslmode=disable"
