@@ -10,15 +10,15 @@ import (
 )
 
 type server struct {
-	router *mux.Router
-	logger *logrus.Logger
+	router  *mux.Router
+	logger  *logrus.Logger
 	storage storage.Storage
 }
 
 func newServer(storage storage.Storage) *server {
-	s := &server {
-		router: mux.NewRouter(),
-		logger: logrus.New(),
+	s := &server{
+		router:  mux.NewRouter(),
+		logger:  logrus.New(),
 		storage: storage,
 	}
 
@@ -27,20 +27,20 @@ func newServer(storage storage.Storage) *server {
 	return s
 }
 
-func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request)  {
+func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
 func (s *server) configureRouter() {
-	s.router.HandleFunc("/events", s.handleCreateEvents()).Methods("POST")
-	s.router.HandleFunc("/events", s.handleGetEvents()).Methods("GET")
+	s.router.HandleFunc("/news", s.handleCreateNews()).Methods("POST")
+	s.router.HandleFunc("/news", s.handleGetNews()).Methods("GET")
 }
 
-func (s *server) handleCreateEvents() http.HandlerFunc  {
+func (s *server) handleCreateNews() http.HandlerFunc {
 	type request struct {
-		Title 		string `json:"title"`
+		Title       string `json:"title"`
 		Description string `json:"description"`
-		Photo 		string `json:"photo"`
+		Photo       string `json:"photo"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
@@ -49,12 +49,12 @@ func (s *server) handleCreateEvents() http.HandlerFunc  {
 			return
 		}
 
-		e := &model.Events{
-			Title: req.Title,
+		e := &model.News{
+			Title:       req.Title,
 			Description: req.Description,
-			Photo: req.Photo,
+			Photo:       req.Photo,
 		}
-		if err := s.storage.Events().CreateEvents(e); err != nil {
+		if err := s.storage.News().CreateNews(e); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
@@ -63,18 +63,18 @@ func (s *server) handleCreateEvents() http.HandlerFunc  {
 	}
 }
 
-func (s *server) handleGetEvents() http.HandlerFunc {
+func (s *server) handleGetNews() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if _, err := s.storage.Events().GetEvents(); err != nil {
+		if _, err := s.storage.News().GetNews(); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		e, _ := s.storage.Events().GetEvents()
+		e, _ := s.storage.News().GetNews()
 		s.respond(w, r, http.StatusOK, e)
 	}
 }
 
-func (s *server) error(w http.ResponseWriter, r *http.Request, code int, err error)  {
+func (s *server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
 	s.respond(w, r, code, map[string]string{"error": err.Error()})
 }
 

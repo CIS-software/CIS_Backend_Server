@@ -7,8 +7,8 @@ import (
 )
 
 type Storage struct {
-	db 					*sql.DB
-	eventsRepository 	*EventsRepository
+	db             *sql.DB
+	newsRepository *NewsRepository
 }
 
 func New(db *sql.DB) *Storage {
@@ -17,14 +17,14 @@ func New(db *sql.DB) *Storage {
 	}
 }
 
-func (s *Storage) Events() storage.EventsRepository {
-	if s.eventsRepository != nil {
-		return s.eventsRepository
+func (s *Storage) News() storage.NewsRepository {
+	if s.newsRepository != nil {
+		return s.newsRepository
 	}
 
-	s.eventsRepository = &EventsRepository{
+	s.newsRepository = &NewsRepository{
 
 		storage: s,
 	}
-	return s.eventsRepository
+	return s.newsRepository
 }

@@ -2,7 +2,7 @@ package storage
 
 import "CIS_Backend_Server/iternal/app/model"
 
-type EventsRepository interface {
-	CreateEvents(events *model.Events) error
-	GetEvents() ([]model.Events, error)
+type NewsRepository interface {
+	CreateNews(news *model.News) error
+	GetNews() ([]model.News, error)
 }
