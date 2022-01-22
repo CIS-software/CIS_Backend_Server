@@ -1,4 +1,4 @@
-CREATE TABLE events (
+CREATE TABLE news (
     id bigserial not null unique,
     title varchar(40) not null,
     description varchar(1000) not null,
