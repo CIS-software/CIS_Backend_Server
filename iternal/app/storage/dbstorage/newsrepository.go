@@ -11,11 +11,11 @@ type NewsRepository struct {
 
 func (r *NewsRepository) CreateNews(e *model.News) error {
 	return r.storage.db.QueryRow(
-		"INSERT INTO news (title, description, photo) VALUES ($1, $2, $3) RETURNING id",
+		"INSERT INTO news (title, description, photo) VALUES ($1, $2, $3) RETURNING id, time_date",
 		e.Title,
 		e.Description,
 		e.Photo,
-	).Scan(&e.Id)
+	).Scan(&e.Id, &e.TimeDate)
 }
 
 func (r *NewsRepository) GetNews() (news []model.News, err error) {
@@ -28,7 +28,7 @@ func (r *NewsRepository) GetNews() (news []model.News, err error) {
 
 	for rows.Next() {
 		e := model.News{}
-		err := rows.Scan(&e.Id, &e.Title, &e.Description, &e.Photo)
+		err := rows.Scan(&e.Id, &e.Title, &e.Description, &e.Photo, &e.TimeDate)
 		if err != nil {
 			logrus.Info(err)
 			continue
