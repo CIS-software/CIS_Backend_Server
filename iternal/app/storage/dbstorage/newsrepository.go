@@ -22,6 +22,7 @@ func (r *NewsRepository) GetNews() (news []model.News, err error) {
 	rows, err := r.storage.db.Query("SELECT * FROM news")
 	if err != nil {
 		logrus.Panic(err)
+		//panic(err)
 	}
 	defer rows.Close()
 
@@ -35,25 +36,4 @@ func (r *NewsRepository) GetNews() (news []model.News, err error) {
 		news = append(news, e)
 	}
 	return news, err
-}
-
-func (r *NewsRepository) UpdateNews(e *model.News) error {
-	_, err := r.storage.db.Exec("UPDATE news SET title = $1, description = $2, photo = $3 WHERE id = $4",
-		e.Title,
-		e.Description,
-		e.Photo,
-		e.Id,
-	)
-	if err != nil {
-		logrus.Panic(err)
-	}
-	return err
-}
-
-func (r *NewsRepository) DeleteNews(e *model.News) error {
-	_, err := r.storage.db.Exec("DELETE FROM news WHERE id = $1", e.Id)
-	if err != nil {
-		logrus.Panic(err)
-	}
-	return err
 }
