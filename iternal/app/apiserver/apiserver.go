@@ -17,7 +17,7 @@ func Start(config *Config, logger *logrus.Logger) error {
 
 	defer db.Close()
 	storage := dbstorage.New(db)
-	srv := newServer(storage)
+	srv := newServer(storage, logger)
 
 	return http.ListenAndServe(config.BindAddr, srv)
 }

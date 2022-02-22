@@ -7,14 +7,27 @@ import (
 )
 
 type Storage struct {
-	db             *sql.DB
-	newsRepository *NewsRepository
+	db              *sql.DB
+	newsRepository  *NewsRepository
+	usersRepository *UsersRepository
 }
 
 func New(db *sql.DB) *Storage {
 	return &Storage{
 		db: db,
 	}
+}
+
+func (s *Storage) Users() storage.UsersRepository {
+	if s.usersRepository != nil {
+		return s.usersRepository
+	}
+
+	s.usersRepository = &UsersRepository{
+
+		storage: s,
+	}
+	return s.usersRepository
 }
 
 func (s *Storage) News() storage.NewsRepository {
