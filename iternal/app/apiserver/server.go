@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 )
 
 type server struct {
@@ -16,10 +17,10 @@ type server struct {
 	storage storage.Storage
 }
 
-func newServer(storage storage.Storage) *server {
+func newServer(storage storage.Storage, logger *logrus.Logger) *server {
 	s := &server{
 		router:  mux.NewRouter(),
-		logger:  logrus.New(),
+		logger:  logger,
 		storage: storage,
 	}
 
@@ -33,10 +34,56 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
+	s.router.HandleFunc("/users", s.handleGetUsers()).Methods("GET")
+	s.router.HandleFunc("/users", s.handleCreateUser()).Methods("POST")
 	s.router.HandleFunc("/news", s.handleCreateNews()).Methods("POST")
 	s.router.HandleFunc("/news", s.handleGetNews()).Methods("GET")
-	s.router.HandleFunc("/news", s.handleUpdateNews()).Methods("PUT")
-	s.router.HandleFunc("/news", s.handleDeleteNews()).Methods("DELETE")
+	s.router.HandleFunc("/news/{id}", s.handleUpdateNews()).Methods("PUT")
+	s.router.HandleFunc("/news/{id}", s.handleDeleteNews()).Methods("DELETE")
+}
+
+func (s *server) handleGetUsers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		users, err := s.storage.Users().GetUsers()
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		s.respond(w, r, http.StatusOK, users)
+	}
+}
+
+func (s *server) handleCreateUser() http.HandlerFunc {
+	type request struct {
+		Name       string  `json:"name"`
+		Surname    string  `json:"surname"`
+		Patronymic string  `json:"patronymic"`
+		Town       string  `json:"town"`
+		Age        int     `json:"age"`
+		Weight     float32 `json:"weight"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := new(request)
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		e := &model.User{
+			Name:       req.Name,
+			Surname:    req.Surname,
+			Patronymic: req.Patronymic,
+			Town:       req.Town,
+			Age:        req.Age,
+			Weight:     req.Weight}
+		if err := s.storage.Users().CreateUser(e); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusCreated, e)
+	}
 }
 
 func (s *server) handleCreateNews() http.HandlerFunc {
@@ -45,6 +92,7 @@ func (s *server) handleCreateNews() http.HandlerFunc {
 		Description string `json:"description"`
 		Photo       string `json:"photo"`
 	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -68,23 +116,28 @@ func (s *server) handleCreateNews() http.HandlerFunc {
 
 func (s *server) handleGetNews() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if _, err := s.storage.News().GetNews(); err != nil {
+		data, err := s.storage.News().GetNews()
+		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		e, _ := s.storage.News().GetNews()
-		s.respond(w, r, http.StatusOK, e)
+		s.respond(w, r, http.StatusOK, data)
 	}
 }
 
 func (s *server) handleUpdateNews() http.HandlerFunc {
 	type request struct {
-		Id          int    `json:"id"`
 		Title       string `json:"title"`
 		Description string `json:"description"`
 		Photo       string `json:"photo"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil || id < 1 {
+			s.error(w, r, http.StatusNotFound, err)
+			return
+		}
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
@@ -92,7 +145,7 @@ func (s *server) handleUpdateNews() http.HandlerFunc {
 		}
 
 		e := &model.News{
-			Id:          req.Id,
+			Id:          id,
 			Title:       req.Title,
 			Description: req.Description,
 			Photo:       req.Photo,
@@ -101,30 +154,24 @@ func (s *server) handleUpdateNews() http.HandlerFunc {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		result := fmt.Sprintf("{News from id: %d has been successfully changed}", req.Id)
+		result := fmt.Sprintf("{News from id: %d has been successfully changed}", id)
 		s.respond(w, r, http.StatusOK, result)
 	}
 }
 
 func (s *server) handleDeleteNews() http.HandlerFunc {
-	type request struct {
-		Id int `json:"id"`
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
-		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			s.error(w, r, http.StatusBadRequest, err)
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil || id < 1 {
+			s.error(w, r, http.StatusNotFound, err)
 			return
 		}
-
-		e := &model.News{
-			Id: req.Id,
-		}
-		if err := s.storage.News().DeleteNews(e); err != nil {
+		if err := s.storage.News().DeleteNews(id); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		result := fmt.Sprintf("{News from id: %d was successfully deleted}", req.Id)
+		result := fmt.Sprintf("{News from id: %d was successfully deleted}", id)
 		s.respond(w, r, http.StatusOK, result)
 	}
 }
