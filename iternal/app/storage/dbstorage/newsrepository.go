@@ -2,6 +2,7 @@ package dbstorage
 
 import (
 	"CIS_Backend_Server/iternal/app/model"
+	"errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,7 +20,7 @@ func (r *NewsRepository) CreateNews(e *model.News) error {
 }
 
 func (r *NewsRepository) GetNews() (news []model.News, err error) {
-	rows, err := r.storage.db.Query("SELECT * FROM news")
+	rows, err := r.storage.db.Query("SELECT * FROM news ORDER BY time_date DESC")
 	if err != nil {
 		logrus.Panic(err)
 	}
@@ -38,7 +39,7 @@ func (r *NewsRepository) GetNews() (news []model.News, err error) {
 }
 
 func (r *NewsRepository) UpdateNews(e *model.News) error {
-	_, err := r.storage.db.Exec("UPDATE news SET title = $1, description = $2, photo = $3 WHERE id = $4",
+	result, err := r.storage.db.Exec("UPDATE news SET title = $1, description = $2, photo = $3 WHERE id = $4",
 		e.Title,
 		e.Description,
 		e.Photo,
@@ -47,13 +48,19 @@ func (r *NewsRepository) UpdateNews(e *model.News) error {
 	if err != nil {
 		logrus.Panic(err)
 	}
+	if count, _ := result.RowsAffected(); count != 1 {
+		return errors.New("news not found")
+	}
 	return err
 }
 
-func (r *NewsRepository) DeleteNews(e *model.News) error {
-	_, err := r.storage.db.Exec("DELETE FROM news WHERE id = $1", e.Id)
+func (r *NewsRepository) DeleteNews(id int) error {
+	result, err := r.storage.db.Exec("DELETE FROM news WHERE id = $1", id)
 	if err != nil {
 		logrus.Panic(err)
+	}
+	if count, _ := result.RowsAffected(); count != 1 {
+		return errors.New("news not found")
 	}
 	return err
 }

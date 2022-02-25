@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 )
 
 type server struct {
@@ -37,8 +38,8 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/users", s.handleCreateUser()).Methods("POST")
 	s.router.HandleFunc("/news", s.handleCreateNews()).Methods("POST")
 	s.router.HandleFunc("/news", s.handleGetNews()).Methods("GET")
-	s.router.HandleFunc("/news", s.handleUpdateNews()).Methods("PUT")
-	s.router.HandleFunc("/news", s.handleDeleteNews()).Methods("DELETE")
+	s.router.HandleFunc("/news/{id}", s.handleUpdateNews()).Methods("PUT")
+	s.router.HandleFunc("/news/{id}", s.handleDeleteNews()).Methods("DELETE")
 }
 
 func (s *server) handleGetUsers() http.HandlerFunc {
@@ -126,12 +127,17 @@ func (s *server) handleGetNews() http.HandlerFunc {
 
 func (s *server) handleUpdateNews() http.HandlerFunc {
 	type request struct {
-		Id          int    `json:"id"`
 		Title       string `json:"title"`
 		Description string `json:"description"`
 		Photo       string `json:"photo"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil || id < 1 {
+			s.error(w, r, http.StatusNotFound, err)
+			return
+		}
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
@@ -139,7 +145,7 @@ func (s *server) handleUpdateNews() http.HandlerFunc {
 		}
 
 		e := &model.News{
-			Id:          req.Id,
+			Id:          id,
 			Title:       req.Title,
 			Description: req.Description,
 			Photo:       req.Photo,
@@ -148,30 +154,24 @@ func (s *server) handleUpdateNews() http.HandlerFunc {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		result := fmt.Sprintf("{News from id: %d has been successfully changed}", req.Id)
+		result := fmt.Sprintf("{News from id: %d has been successfully changed}", id)
 		s.respond(w, r, http.StatusOK, result)
 	}
 }
 
 func (s *server) handleDeleteNews() http.HandlerFunc {
-	type request struct {
-		Id int `json:"id"`
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
-		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			s.error(w, r, http.StatusBadRequest, err)
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil || id < 1 {
+			s.error(w, r, http.StatusNotFound, err)
 			return
 		}
-
-		e := &model.News{
-			Id: req.Id,
-		}
-		if err := s.storage.News().DeleteNews(e); err != nil {
+		if err := s.storage.News().DeleteNews(id); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		result := fmt.Sprintf("{News from id: %d was successfully deleted}", req.Id)
+		result := fmt.Sprintf("{News from id: %d was successfully deleted}", id)
 		s.respond(w, r, http.StatusOK, result)
 	}
 }
