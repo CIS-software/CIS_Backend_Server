@@ -2,6 +2,8 @@ package dbstorage
 
 import (
 	"CIS_Backend_Server/iternal/app/model"
+	"database/sql"
+	"errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -11,34 +13,32 @@ type UsersRepository struct {
 
 func (r *UsersRepository) CreateUser(u *model.User) error {
 	return r.storage.db.QueryRow(
-		"INSERT INTO users (name, surname, patronymic, town, age, weight) "+
-			"VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, belt, id_iko",
+		"INSERT INTO users (name, surname, patronymic, town, age, weight, belt, id_iko) "+
+			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
 		u.Name,
 		u.Surname,
 		u.Patronymic,
 		u.Town,
 		u.Age,
 		u.Weight,
-	).Scan(&u.Id, &u.Belt, &u.IdIKO)
+		u.Belt,
+		u.IdIKO,
+	).Scan(&u.Id)
 }
 
-func (r *UsersRepository) GetUsers() (users []model.User, err error) {
-	rows, err := r.storage.db.Query("SELECT * FROM users")
-	if err != nil {
+func (r *UsersRepository) GetUsers(id int) (user *model.User, err error) {
+	row := r.storage.db.QueryRow("SELECT * FROM users WHERE id = $1", id)
+	user = new(model.User)
+	err = row.Scan(&user.Id, &user.Name, &user.Surname, &user.Patronymic, &user.Town, &user.Age, &user.Belt, &user.Weight, &user.IdIKO)
+
+	if err == sql.ErrNoRows {
+		err = errors.New("User not found")
+		return user, err
+	} else if err != nil {
 		logrus.Panic(err)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		u := model.User{}
-		err := rows.Scan(&u.Id, &u.Name, &u.Surname, &u.Patronymic, &u.Town, &u.Age, &u.Belt, &u.Weight, &u.IdIKO)
-		if err != nil {
-			logrus.Info(err)
-			continue
-		}
-		users = append(users, u)
-	}
-	return users, err
+	return user, err
 }
 
 func (r *UsersRepository) Login(u *model.User) (uint64, error) {

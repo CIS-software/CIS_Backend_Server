@@ -1,2 +1,1 @@
-DROP TABLE news;
-DROP TABLE users;
+DROP TABLE news, users;
