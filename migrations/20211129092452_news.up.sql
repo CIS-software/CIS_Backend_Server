@@ -10,10 +10,10 @@ CREATE TABLE users (
     id bigserial not null unique,
     name varchar(20) not null,
     surname varchar(20) not null,
-    patronymic varchar(20) default '',
+    patronymic varchar(20) not null,
     town varchar(20) not null,
     age smallint not null,
-    belt varchar(15) default '',
-    weight numeric not null,
-    id_iko varchar(20) default ''
+    belt varchar(15),
+    weight numeric,
+    id_iko varchar(20)
 );

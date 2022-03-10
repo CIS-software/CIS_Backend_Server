@@ -4,6 +4,7 @@ import (
 	"CIS_Backend_Server/iternal/app/model"
 	"CIS_Backend_Server/iternal/app/storage"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -34,7 +35,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
-	s.router.HandleFunc("/users", s.handleGetUsers()).Methods("GET")
+	s.router.HandleFunc("/users/{id}", s.handleGetUser()).Methods("GET")
 	s.router.HandleFunc("/users", s.handleCreateUser()).Methods("POST")
 	s.router.HandleFunc("/news", s.handleCreateNews()).Methods("POST")
 	s.router.HandleFunc("/news", s.handleGetNews()).Methods("GET")
@@ -42,25 +43,34 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/news/{id}", s.handleDeleteNews()).Methods("DELETE")
 }
 
-func (s *server) handleGetUsers() http.HandlerFunc {
+func (s *server) handleGetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		users, err := s.storage.Users().GetUsers()
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if id < 1 {
+			err = errors.New("Id can't be negative")
+			s.error(w, r, http.StatusNotFound, err)
+			return
+		} else if err != nil {
+			s.error(w, r, http.StatusNotFound, err)
+			return
+		}
+		user, err := s.storage.Users().GetUsers(id)
 		if err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		s.respond(w, r, http.StatusOK, users)
+		s.respond(w, r, http.StatusOK, user)
 	}
 }
 
 func (s *server) handleCreateUser() http.HandlerFunc {
 	type request struct {
-		Name       string  `json:"name"`
-		Surname    string  `json:"surname"`
-		Patronymic string  `json:"patronymic"`
-		Town       string  `json:"town"`
-		Age        int     `json:"age"`
-		Weight     float32 `json:"weight"`
+		Name       string `json:"name"`
+		Surname    string `json:"surname"`
+		Patronymic string `json:"patronymic"`
+		Town       string `json:"town"`
+		Age        int    `json:"age"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +86,7 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 			Patronymic: req.Patronymic,
 			Town:       req.Town,
 			Age:        req.Age,
-			Weight:     req.Weight}
+		}
 		if err := s.storage.Users().CreateUser(e); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
