@@ -10,11 +10,17 @@ type Storage struct {
 	db              *sql.DB
 	newsRepository  *NewsRepository
 	usersRepository *UsersRepository
+	SecretKey       string
+	AccessLifetime  int
+	RefreshLifetime int
 }
 
-func New(db *sql.DB) *Storage {
+func New(db *sql.DB, secretKey string, accessLifetime int, refreshLifetime int) *Storage {
 	return &Storage{
-		db: db,
+		db:              db,
+		SecretKey:       secretKey,
+		AccessLifetime:  accessLifetime,
+		RefreshLifetime: refreshLifetime,
 	}
 }
 

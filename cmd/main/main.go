@@ -21,7 +21,7 @@ func main() {
 	config := apiserver.NewConfig()
 	logger := logrus.New()
 	_, err := toml.DecodeFile(configPath, config)
-	if err !=  nil {
+	if err != nil {
 		logrus.Fatal(err)
 	}
 
