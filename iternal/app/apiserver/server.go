@@ -300,7 +300,7 @@ func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data 
 
 func (s *server) JwtAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		notAuth := []string{"/login", "/create-user-auth", "/refresh-token"}
+		notAuth := []string{"/login", "/create-user-auth", "/update-tokens"}
 		requestPath := r.URL.Path
 		for _, value := range notAuth {
 			if value == requestPath {
