@@ -16,9 +16,8 @@ func Start(config *Config, logger *logrus.Logger) error {
 	logger.Info("The server is running...")
 
 	defer db.Close()
-	storage := dbstorage.New(db)
-	srv := newServer(storage, logger)
-
+	storage := dbstorage.New(db, config.JwtSecretKey, config.AccessTokenLifetime, config.RefreshTokenLifetime)
+	srv := newServer(storage, logger, config.JwtSecretKey)
 	return http.ListenAndServe(config.BindAddr, srv)
 }
 
