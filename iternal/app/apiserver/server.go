@@ -41,6 +41,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
+
 	s.router.HandleFunc("/user/{id}", s.handleGetUser()).Methods("POST")
 	s.router.HandleFunc("/user", s.handleCreateUser()).Methods("POST")
 	s.router.HandleFunc("/create-user-auth", s.handleCreateUserAuth()).Methods("POST")

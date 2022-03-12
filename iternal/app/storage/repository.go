@@ -15,4 +15,5 @@ type UsersRepository interface {
 	CreateUserAuth(user *model.UserAuth) error
 	Login(user *model.UserAuth) error
 	UpdateTokens(user *model.UserAuth) error
+	GetUsers(id int) (users *model.User, err error)
 }
