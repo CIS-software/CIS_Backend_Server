@@ -10,9 +10,8 @@ type NewsRepository interface {
 }
 
 type UsersRepository interface {
-	CreateUser(user *model.User) error
+	CreateUser(userAuth *model.UserAuth, user *model.User) error
 	GetUser(id int) (users *model.User, err error)
-	CreateUserAuth(user *model.UserAuth) error
-	Login(user *model.UserAuth) error
-	UpdateTokens(user *model.UserAuth) error
+	Login(userAuth *model.UserAuth, tokens *model.Tokens) error
+	UpdateTokens(tokens *model.Tokens) error
 }
