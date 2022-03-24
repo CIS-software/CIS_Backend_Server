@@ -6,15 +6,14 @@ import (
 )
 
 type User struct {
-	UserID     int     `json:"user-id"`
-	Name       string  `json:"name"`
-	Surname    string  `json:"surname"`
-	Patronymic string  `json:"patronymic"`
-	Town       string  `json:"town"`
-	Age        int     `json:"age"`
-	Belt       string  `json:"belt"`
-	Weight     float32 `json:"weight"`
-	IdIKO      string  `json:"id_iko"`
+	UserId  int     `json:"userId"`
+	Name    string  `json:"name"`
+	Surname string  `json:"surname"`
+	Town    string  `json:"town"`
+	Age     string  `json:"age"`
+	Belt    string  `json:"belt"`
+	Weight  float32 `json:"weight"`
+	IdIKO   string  `json:"id_iko"`
 }
 
 type UserAuth struct {
@@ -22,22 +21,31 @@ type UserAuth struct {
 	Email             string `json:"email"`
 	Password          string `json:"-"`
 	EncryptedPassword string `json:"-"`
-	AccessToken       string `json:"access-token,omitempty"`
-	RefreshToken      string `json:"refresh-token,omitempty"`
-	jwt.StandardClaims
 }
 
 type Tokens struct {
-	AccessToken  string `json:"access-token"`
-	RefreshToken string `json:"refresh-token"`
+	TokenId      int    `json:"token-id,omitempty"`
+	AccessToken  string `json:"access-token,omitempty"`
+	RefreshToken string `json:"refresh-token,omitempty"`
+	jwt.StandardClaims
 }
 
-func CreateToken(id, lifetime int, email, secretKey string) (string, error) {
-	claims := &UserAuth{
-		Id:    id,
-		Email: email,
+type UserData struct {
+	Id      int     `json:"id"`
+	Email   string  `json:"email"`
+	Name    string  `json:"name"`
+	Surname string  `json:"surname"`
+	Town    string  `json:"town"`
+	Age     string  `json:"age"`
+	Belt    string  `json:"belt"`
+	Weight  float32 `json:"weight"`
+	IdIKO   string  `json:"id_iko"`
+}
+
+func CreateToken(id, lifetime int, secretKey string) (string, error) {
+	claims := &Tokens{
+		TokenId: id,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   string(id),
 			ExpiresAt: time.Now().Add(time.Minute * time.Duration(lifetime)).Unix(),
 		},
 	}

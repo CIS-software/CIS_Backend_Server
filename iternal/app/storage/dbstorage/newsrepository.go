@@ -30,7 +30,7 @@ func (r *NewsRepository) GetNews() (news []model.News, err error) {
 		e := model.News{}
 		err := rows.Scan(&e.Id, &e.Title, &e.Description, &e.Photo, &e.TimeDate)
 		if err != nil {
-			logrus.Info(err)
+			logrus.Error(err)
 			continue
 		}
 		news = append(news, e)
@@ -46,7 +46,7 @@ func (r *NewsRepository) UpdateNews(e *model.News) error {
 		e.Id,
 	)
 	if err != nil {
-		logrus.Panic(err)
+		return err
 	}
 	if count, _ := result.RowsAffected(); count != 1 {
 		return errors.New("news not found")
@@ -57,7 +57,7 @@ func (r *NewsRepository) UpdateNews(e *model.News) error {
 func (r *NewsRepository) DeleteNews(id int) error {
 	result, err := r.storage.db.Exec("DELETE FROM news WHERE id = $1", id)
 	if err != nil {
-		logrus.Panic(err)
+		return err
 	}
 	if count, _ := result.RowsAffected(); count != 1 {
 		return errors.New("news not found")

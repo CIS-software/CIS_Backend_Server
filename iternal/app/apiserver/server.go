@@ -42,8 +42,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) configureRouter() {
 	s.router.HandleFunc("/user/{id}", s.handleGetUser()).Methods("POST")
-	s.router.HandleFunc("/user", s.handleCreateUser()).Methods("POST")
-	s.router.HandleFunc("/create-user-auth", s.handleCreateUserAuth()).Methods("POST")
+	s.router.HandleFunc("/create-user", s.handleCreateUser()).Methods("POST")
 	s.router.HandleFunc("/login", s.handleLogin()).Methods("POST")
 	s.router.HandleFunc("/update-tokens", s.handleUpdateTokens()).Methods("POST")
 	s.router.HandleFunc("/news", s.handleCreateNews()).Methods("POST")
@@ -76,11 +75,12 @@ func (s *server) handleGetUser() http.HandlerFunc {
 
 func (s *server) handleCreateUser() http.HandlerFunc {
 	type request struct {
-		Name       string `json:"name"`
-		Surname    string `json:"surname"`
-		Patronymic string `json:"patronymic"`
-		Town       string `json:"town"`
-		Age        int    `json:"age"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Name     string `json:"name"`
+		Surname  string `json:"surname"`
+		Town     string `json:"town"`
+		Age      string `json:"age"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -90,51 +90,31 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 			return
 		}
 
-		userId, err := strconv.Atoi(fmt.Sprintf("%v", r.Context().Value("user")))
-		if err != nil {
-			s.error(w, r, http.StatusInternalServerError, err)
-			return
-		}
-		e := &model.User{
-			UserID:     userId,
-			Name:       req.Name,
-			Surname:    req.Surname,
-			Patronymic: req.Patronymic,
-			Town:       req.Town,
-			Age:        req.Age,
-		}
-		if err := s.storage.Users().CreateUser(e); err != nil {
-			s.error(w, r, http.StatusUnprocessableEntity, err)
-			return
-		}
-
-		s.respond(w, r, http.StatusCreated, e)
-	}
-}
-
-func (s *server) handleCreateUserAuth() http.HandlerFunc {
-	type request struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
-		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			s.error(w, r, http.StatusBadRequest, err)
-			return
-		}
-
-		u := &model.UserAuth{
+		a := &model.UserAuth{
 			Email:    req.Email,
 			Password: req.Password,
 		}
-		if err := s.storage.Users().CreateUserAuth(u); err != nil {
+		u := &model.User{
+			Name:    req.Name,
+			Surname: req.Surname,
+			Town:    req.Town,
+			Age:     req.Age,
+		}
+		if err := s.storage.Users().CreateUser(a, u); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, u)
+		data := &model.UserData{
+			Id:      a.Id,
+			Email:   a.Email,
+			Name:    u.Name,
+			Surname: u.Surname,
+			Town:    u.Town,
+			Age:     u.Age,
+		}
+
+		s.respond(w, r, http.StatusCreated, data)
 	}
 }
 
@@ -151,18 +131,19 @@ func (s *server) handleLogin() http.HandlerFunc {
 			return
 		}
 
-		u := &model.UserAuth{
+		a := &model.UserAuth{
 			Email:    req.Email,
 			Password: req.Password,
 		}
-		if err := s.storage.Users().Login(u); err != nil {
+		t := new(model.Tokens)
+		if err := s.storage.Users().Login(a, t); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-
 		data := &model.Tokens{
-			AccessToken:  u.AccessToken,
-			RefreshToken: u.RefreshToken,
+			TokenId:      0,
+			AccessToken:  t.AccessToken,
+			RefreshToken: t.RefreshToken,
 		}
 		s.respond(w, r, http.StatusCreated, data)
 	}
@@ -180,17 +161,17 @@ func (s *server) handleUpdateTokens() http.HandlerFunc {
 			return
 		}
 
-		u := &model.UserAuth{
+		t := &model.Tokens{
 			RefreshToken: req.RefreshToken,
 		}
-		if err := s.storage.Users().UpdateTokens(u); err != nil {
+		if err := s.storage.Users().UpdateTokens(t); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-
 		data := &model.Tokens{
-			AccessToken:  u.AccessToken,
-			RefreshToken: u.RefreshToken,
+			TokenId:      0,
+			AccessToken:  t.AccessToken,
+			RefreshToken: t.RefreshToken,
 		}
 		s.respond(w, r, http.StatusCreated, data)
 	}
@@ -264,8 +245,8 @@ func (s *server) handleUpdateNews() http.HandlerFunc {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		result := fmt.Sprintf("{News from id: %d has been successfully changed}", id)
-		s.respond(w, r, http.StatusOK, result)
+		data := fmt.Sprintf("{News from id: %d has been successfully changed}", id)
+		s.respond(w, r, http.StatusOK, data)
 	}
 }
 
@@ -281,12 +262,13 @@ func (s *server) handleDeleteNews() http.HandlerFunc {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		result := fmt.Sprintf("{News from id: %d was successfully deleted}", id)
-		s.respond(w, r, http.StatusOK, result)
+		data := fmt.Sprintf("{News from id: %d was successfully deleted}", id)
+		s.respond(w, r, http.StatusOK, data)
 	}
 }
 
 func (s *server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
+	s.logger.Error(err)
 	s.respond(w, r, code, map[string]string{"error": err.Error()})
 }
 
@@ -300,7 +282,7 @@ func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data 
 
 func (s *server) JwtAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		notAuth := []string{"/login", "/create-user-auth", "/update-tokens"}
+		notAuth := []string{"/login", "/create-user", "/update-tokens"}
 		requestPath := r.URL.Path
 		for _, value := range notAuth {
 			if value == requestPath {
@@ -322,8 +304,8 @@ func (s *server) JwtAuthentication(next http.Handler) http.Handler {
 		}
 
 		tokenPart := splitted[1]
-		u := &model.UserAuth{}
-		token, err := jwt.ParseWithClaims(tokenPart, u, func(token *jwt.Token) (interface{}, error) {
+		t := &model.Tokens{}
+		token, err := jwt.ParseWithClaims(tokenPart, t, func(token *jwt.Token) (interface{}, error) {
 			return []byte(s.secretKey), nil
 		})
 		if err != nil {
@@ -336,7 +318,7 @@ func (s *server) JwtAuthentication(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", u.Id)
+		ctx := context.WithValue(r.Context(), "user", t.TokenId)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

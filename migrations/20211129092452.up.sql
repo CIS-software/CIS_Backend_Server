@@ -8,6 +8,7 @@ CREATE TABLE news (
 CREATE TABLE user_auth (
     id bigserial not null unique primary key,
     email varchar(50) not null,
+    user_type varchar(20) default 'user',
     encrypted_password varchar(100) not null,
     access_token varchar(200),
     refresh_token varchar(200)
@@ -16,9 +17,8 @@ CREATE TABLE user_profile (
     user_id bigint not null unique primary key,
     name varchar(20) not null,
     surname varchar(20) not null,
-    patronymic varchar(20) not null,
     town varchar(20) not null,
-    age smallint not null,
+    age varchar(20) not null,
     belt varchar(15),
     weight numeric,
     id_iko varchar(20),

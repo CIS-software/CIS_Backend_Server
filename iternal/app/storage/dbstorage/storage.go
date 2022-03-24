@@ -15,7 +15,7 @@ type Storage struct {
 	RefreshLifetime int
 }
 
-func New(db *sql.DB, secretKey string, accessLifetime int, refreshLifetime int) *Storage {
+func New(db *sql.DB, secretKey string, accessLifetime, refreshLifetime int) *Storage {
 	return &Storage{
 		db:              db,
 		SecretKey:       secretKey,
