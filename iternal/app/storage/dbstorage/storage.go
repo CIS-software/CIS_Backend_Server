@@ -7,12 +7,13 @@ import (
 )
 
 type Storage struct {
-	db              *sql.DB
-	newsRepository  *NewsRepository
-	usersRepository *UsersRepository
-	SecretKey       string
-	AccessLifetime  int
-	RefreshLifetime int
+	db                 *sql.DB
+	newsRepository     *NewsRepository
+	usersRepository    *UsersRepository
+	calendarRepository *CalendarRepository
+	SecretKey          string
+	AccessLifetime     int
+	RefreshLifetime    int
 }
 
 func New(db *sql.DB, secretKey string, accessLifetime, refreshLifetime int) *Storage {
@@ -46,4 +47,16 @@ func (s *Storage) News() storage.NewsRepository {
 		storage: s,
 	}
 	return s.newsRepository
+}
+
+func (s *Storage) Calendar() storage.CalendarRepository {
+	if s.calendarRepository != nil {
+		return s.calendarRepository
+	}
+
+	s.calendarRepository = &CalendarRepository{
+
+		storage: s,
+	}
+	return s.calendarRepository
 }

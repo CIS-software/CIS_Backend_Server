@@ -49,6 +49,10 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/news", s.handleGetNews()).Methods("GET")
 	s.router.HandleFunc("/news/{id}", s.handleUpdateNews()).Methods("PUT")
 	s.router.HandleFunc("/news/{id}", s.handleDeleteNews()).Methods("DELETE")
+	s.router.HandleFunc("/create-training", s.handleCreateTraining()).Methods("POST")
+	s.router.HandleFunc("/training-calendar", s.handleGetTrainingCalendar()).Methods("GET")
+	s.router.HandleFunc("/training/{id}", s.handleUpdateTraining()).Methods("PUT")
+	s.router.HandleFunc("/training/{id}", s.handleDeleteTraining()).Methods("DELETE")
 	s.router.Use(s.JwtAuthentication)
 }
 
@@ -141,7 +145,7 @@ func (s *server) handleLogin() http.HandlerFunc {
 			return
 		}
 		data := &model.Tokens{
-			TokenId:      0,
+			TokenId:      t.TokenId,
 			AccessToken:  t.AccessToken,
 			RefreshToken: t.RefreshToken,
 		}
@@ -263,6 +267,92 @@ func (s *server) handleDeleteNews() http.HandlerFunc {
 			return
 		}
 		data := fmt.Sprintf("{News from id: %d was successfully deleted}", id)
+		s.respond(w, r, http.StatusOK, data)
+	}
+}
+
+func (s *server) handleCreateTraining() http.HandlerFunc {
+	type request struct {
+		Date        string `json:"date"`
+		Description string `json:"description"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		c := &model.Calendar{
+			Date:        req.Date,
+			Description: req.Description,
+		}
+		if err := s.storage.Calendar().CreateTraining(c); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusCreated, c)
+	}
+}
+
+func (s *server) handleGetTrainingCalendar() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, err := s.storage.Calendar().GetTrainings()
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		s.respond(w, r, http.StatusOK, data)
+	}
+}
+
+func (s *server) handleUpdateTraining() http.HandlerFunc {
+	type request struct {
+		Date        string `json:"date"`
+		Description string `json:"description"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil || id < 1 {
+			s.error(w, r, http.StatusNotFound, err)
+			return
+		}
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		c := &model.Calendar{
+			Id:          id,
+			Date:        req.Date,
+			Description: req.Description,
+		}
+		if err := s.storage.Calendar().UpdateTrainings(c); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		data := fmt.Sprintf("{Training from id: %d has been successfully changed}", id)
+		s.respond(w, r, http.StatusOK, data)
+	}
+}
+
+func (s *server) handleDeleteTraining() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil || id < 1 {
+			s.error(w, r, http.StatusNotFound, err)
+			return
+		}
+		if err := s.storage.Calendar().DeleteTrainings(id); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		data := fmt.Sprintf("{Training from id: %d was successfully deleted}", id)
 		s.respond(w, r, http.StatusOK, data)
 	}
 }

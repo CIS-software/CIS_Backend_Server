@@ -24,7 +24,7 @@ type UserAuth struct {
 }
 
 type Tokens struct {
-	TokenId      int    `json:"token-id,omitempty"`
+	TokenId      int    `json:"id,omitempty"`
 	AccessToken  string `json:"access-token,omitempty"`
 	RefreshToken string `json:"refresh-token,omitempty"`
 	jwt.StandardClaims

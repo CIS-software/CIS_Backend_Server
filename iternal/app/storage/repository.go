@@ -15,3 +15,10 @@ type UsersRepository interface {
 	Login(userAuth *model.UserAuth, tokens *model.Tokens) error
 	UpdateTokens(tokens *model.Tokens) error
 }
+
+type CalendarRepository interface {
+	CreateTraining(calendar *model.Calendar) error
+	GetTrainings() (trainings []model.Calendar, err error)
+	UpdateTrainings(calendar *model.Calendar) error
+	DeleteTrainings(id int) error
+}

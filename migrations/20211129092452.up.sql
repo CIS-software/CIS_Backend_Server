@@ -24,3 +24,8 @@ CREATE TABLE user_profile (
     id_iko varchar(20),
     foreign key (user_id) references user_auth (id) on delete cascade on update cascade
 );
+CREATE TABLE training_calendar (
+    id bigserial not null unique,
+    date date not null,
+    description varchar(50) not null
+);
