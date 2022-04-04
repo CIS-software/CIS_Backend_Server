@@ -1,14 +1,17 @@
 package apiserver
 
 import (
+	"CIS_Backend_Server/iternal/app/apiserver/entities/handlers"
+	"CIS_Backend_Server/iternal/app/apiserver/usecase/service"
 	"CIS_Backend_Server/iternal/app/storage/dbstorage"
 	"database/sql"
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
-func Start(config *Config, logger *logrus.Logger) error {
-	db, err := newDB(config.DatabaseURL)
+func Start(cfg *Config, logger *logrus.Logger, router *mux.Router) error {
+	db, err := newDB(cfg.DatabaseURL)
 	if err != nil {
 		return err
 	}
@@ -16,9 +19,10 @@ func Start(config *Config, logger *logrus.Logger) error {
 	logger.Info("The server is running...")
 
 	defer db.Close()
-	storage := dbstorage.New(db, config.JwtSecretKey, config.AccessTokenLifetime, config.RefreshTokenLifetime)
-	srv := newServer(storage, logger, config.JwtSecretKey)
-	return http.ListenAndServe(config.BindAddr, srv)
+	storage := dbstorage.New(db, cfg.JwtSecretKey, cfg.AccessTokenLifetime, cfg.RefreshTokenLifetime)
+	handler := handlers.New(service.New(storage))
+	srv := newServer(logger, router, handler, cfg.JwtSecretKey)
+	return http.ListenAndServe(cfg.BindAddr, srv)
 }
 
 func newDB(databaseURL string) (*sql.DB, error) {

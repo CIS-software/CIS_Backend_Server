@@ -24,22 +24,10 @@ type UserAuth struct {
 }
 
 type Tokens struct {
-	TokenId      int    `json:"token-id,omitempty"`
+	TokenId      int    `json:"id,omitempty"`
 	AccessToken  string `json:"access-token,omitempty"`
 	RefreshToken string `json:"refresh-token,omitempty"`
 	jwt.StandardClaims
-}
-
-type UserData struct {
-	Id      int     `json:"id"`
-	Email   string  `json:"email"`
-	Name    string  `json:"name"`
-	Surname string  `json:"surname"`
-	Town    string  `json:"town"`
-	Age     string  `json:"age"`
-	Belt    string  `json:"belt"`
-	Weight  float32 `json:"weight"`
-	IdIKO   string  `json:"id_iko"`
 }
 
 func CreateToken(id, lifetime int, secretKey string) (string, error) {

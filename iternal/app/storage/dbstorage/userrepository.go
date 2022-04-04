@@ -30,7 +30,8 @@ func (r *UsersRepository) CreateUser(a *model.UserAuth, u *model.User) error {
 	}
 
 	return r.storage.db.QueryRow(
-		"INSERT INTO user_profile (user_id, name, surname, town, age, weight, belt, id_iko) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		"INSERT INTO user_profile (user_id, name, surname, town, age, weight, belt, id_iko)"+
+			" VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
 		a.Id,
 		u.Name,
 		u.Surname,
@@ -79,11 +80,12 @@ func (r *UsersRepository) Login(a *model.UserAuth, t *model.Tokens) error {
 		return err
 	}
 
+	t.TokenId = a.Id
 	_, err = r.storage.db.Exec(
 		"UPDATE user_auth SET access_token = $1, refresh_token = $2 WHERE id = $3",
 		t.AccessToken,
 		t.RefreshToken,
-		a.Id,
+		t.TokenId,
 	)
 	return err
 }
