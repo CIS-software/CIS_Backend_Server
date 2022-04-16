@@ -1,9 +1,12 @@
 package storage
 
-import "CIS_Backend_Server/iternal/app/model"
+import (
+	"CIS_Backend_Server/iternal/app/model"
+	"context"
+)
 
 type NewsRepository interface {
-	CreateNews(news *model.News) error
+	CreateNews(ctx context.Context, news *model.News) error
 	GetNews() ([]model.News, error)
 	UpdateNews(news *model.News) error
 	DeleteNews(id int) error

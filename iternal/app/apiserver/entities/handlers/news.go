@@ -4,8 +4,10 @@ import (
 	"CIS_Backend_Server/iternal/app/apiserver/utils"
 	"CIS_Backend_Server/iternal/app/model"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 )
@@ -16,23 +18,39 @@ type HandlerNews struct {
 
 func (h *HandlerNews) HandleCreateNews() http.HandlerFunc {
 	type request struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
-		Photo       string `json:"photo"`
+		Title       string
+		Description string
+		//Photo       model.Photo `json:"photo"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
-		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			utils.Error(w, r, http.StatusBadRequest, err)
+		logrus.Info(1)
+		//if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		//	utils.Error(w, r, http.StatusBadRequest, err)
+		//	return
+		//}
+		req.Title = r.FormValue("title")
+		req.Description = r.FormValue("description")
+		logrus.Info(req.Title, req.Description)
+
+		src, hdr, err := r.FormFile("photo")
+		if err != nil {
+			utils.Error(w, r, http.StatusBadRequest, errors.New("wrong photo format"))
 			return
 		}
+		logrus.Info(3)
+		object := &model.Photo{
+			Payload:     src,
+			PayloadSize: hdr.Size,
+		}
+		defer src.Close()
 
 		n := &model.News{
 			Title:       req.Title,
 			Description: req.Description,
-			Photo:       req.Photo,
+			Photo:       *object,
 		}
-		if err := h.handler.service.News().CreateNews(n); err != nil {
+		if err := h.handler.service.News().CreateNews(r.Context(), n); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
@@ -75,7 +93,7 @@ func (h *HandlerNews) HandleUpdateNews() http.HandlerFunc {
 			Id:          id,
 			Title:       req.Title,
 			Description: req.Description,
-			Photo:       req.Photo,
+			//Photo:       req.Photo,
 		}
 		if err := h.handler.service.News().UpdateNews(e); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)

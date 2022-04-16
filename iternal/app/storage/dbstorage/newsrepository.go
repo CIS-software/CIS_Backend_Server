@@ -2,7 +2,9 @@ package dbstorage
 
 import (
 	"CIS_Backend_Server/iternal/app/model"
+	"context"
 	"errors"
+	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,12 +12,28 @@ type NewsRepository struct {
 	storage *Storage
 }
 
-func (r *NewsRepository) CreateNews(e *model.News) error {
+const BucketName = "min"
+
+func (r *NewsRepository) CreateNews(ctx context.Context, e *model.News) error {
+	e.PayloadName = model.GenerateObjectName(e)
+	logrus.Info(e.PayloadName)
+	_, err := r.storage.minioClient.PutObject(
+		ctx,
+		BucketName,
+		e.PayloadName,
+		e.Payload,
+		e.PayloadSize,
+		minio.PutObjectOptions{ContentType: "image/png"},
+	)
+	if err != nil {
+		return err
+	}
+
 	return r.storage.db.QueryRow(
 		"INSERT INTO news (title, description, photo) VALUES ($1, $2, $3) RETURNING id, time_date",
 		e.Title,
 		e.Description,
-		e.Photo,
+		e.PayloadName,
 	).Scan(&e.Id, &e.TimeDate)
 }
 

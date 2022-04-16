@@ -1,6 +1,12 @@
 bind_addr = ":8080"
 log_level = "debug"
-database_url = "postgres://postgres:Jad108fsdlknzc@localhost:5432/postgres?sslmode=disable"
+database_url = "postgres://postgres:Jad108fsdlknzc@host.docker.internal:5436/postgres?sslmode=disable"
+minio_endpoint = "localhost:9000"
+access_key_id = "minio"
+secret_access_key = "minio123"
+use_ssl = true
 jwt_secret_key = "1lncqger2xjt9bn"
 access_token_lifetime = 20 #20 minutes
 refresh_token_lifetime = 525600 #525600 minutes - 365 days
+
+
