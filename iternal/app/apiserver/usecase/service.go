@@ -13,9 +13,9 @@ type Service interface {
 
 type NewsService interface {
 	CreateNews(ctx context.Context, news *model.News) error
-	GetNews() ([]model.News, error)
-	UpdateNews(news *model.News) error
-	DeleteNews(id int) error
+	GetNews(ctx context.Context) ([]model.News, error)
+	UpdateNews(ctx context.Context, news *model.News) error
+	DeleteNews(ctx context.Context, id int) error
 }
 
 type UsersService interface {

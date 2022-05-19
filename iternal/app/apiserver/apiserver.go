@@ -26,7 +26,7 @@ func Start(cfg *Config, logger *logrus.Logger, router *mux.Router) error {
 		logger.Fatalln(err)
 	}
 
-	//logger.Printf("%#v\n", minioClient)
+	logger.Printf("%#v\n", minioClient)
 	logger.Info("Client minIO is running...")
 	logger.Info("The server is running...")
 
@@ -35,6 +35,7 @@ func Start(cfg *Config, logger *logrus.Logger, router *mux.Router) error {
 	storage := dbstorage.New(db, minioClient, cfg.JwtSecretKey, cfg.AccessTokenLifetime, cfg.RefreshTokenLifetime)
 	handler := handlers.New(service.New(storage))
 	srv := newServer(logger, router, handler, cfg.JwtSecretKey)
+	//return http.Serve(autocert.NewListener(cfg.BindAddr), srv)
 	return http.ListenAndServe(cfg.BindAddr, srv)
 }
 

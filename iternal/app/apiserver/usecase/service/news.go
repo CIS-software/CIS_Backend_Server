@@ -13,14 +13,14 @@ func (s *NewsService) CreateNews(ctx context.Context, n *model.News) error {
 	return s.service.storage.News().CreateNews(ctx, n)
 }
 
-func (s *NewsService) GetNews() ([]model.News, error) {
-	return s.service.storage.News().GetNews()
+func (s *NewsService) GetNews(ctx context.Context) ([]model.News, error) {
+	return s.service.storage.News().GetNews(ctx)
 }
 
-func (s *NewsService) UpdateNews(n *model.News) error {
-	return s.service.storage.News().UpdateNews(n)
+func (s *NewsService) UpdateNews(ctx context.Context, n *model.News) error {
+	return s.service.storage.News().UpdateNews(ctx, n)
 }
 
-func (s *NewsService) DeleteNews(id int) error {
-	return s.service.storage.News().DeleteNews(id)
+func (s *NewsService) DeleteNews(ctx context.Context, id int) error {
+	return s.service.storage.News().DeleteNews(ctx, id)
 }

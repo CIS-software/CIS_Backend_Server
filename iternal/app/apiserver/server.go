@@ -45,7 +45,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/update-tokens", s.handler.Users().HandleUpdateTokens()).Methods("POST")
 	s.router.HandleFunc("/news", s.handler.News().HandleCreateNews()).Methods("POST")
 	s.router.HandleFunc("/news", s.handler.News().HandleGetNews()).Methods("GET")
-	s.router.HandleFunc("/news/{id}", s.handler.News().HandleUpdateNews()).Methods("PUT")
+	s.router.HandleFunc("/news", s.handler.News().HandleUpdateNews()).Methods("PUT")
 	s.router.HandleFunc("/news/{id}", s.handler.News().HandleDeleteNews()).Methods("DELETE")
 	s.router.HandleFunc("/create-training", s.handler.Calendar().HandleCreateTraining()).Methods("POST")
 	s.router.HandleFunc("/get-calendar", s.handler.Calendar().HandleGetTrainingCalendar()).Methods("GET")
