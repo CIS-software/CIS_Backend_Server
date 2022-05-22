@@ -39,7 +39,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) configureRouter() {
-	s.router.HandleFunc("/user/{id}", s.handler.Users().HandleGetUser()).Methods("POST")
+	s.router.HandleFunc("/user/{id}", s.handler.Users().HandleGetUser()).Methods("GET")
 	s.router.HandleFunc("/create-user", s.handler.Users().HandleCreateUser()).Methods("POST")
 	s.router.HandleFunc("/login", s.handler.Users().HandleLogin()).Methods("POST")
 	s.router.HandleFunc("/update-tokens", s.handler.Users().HandleUpdateTokens()).Methods("POST")

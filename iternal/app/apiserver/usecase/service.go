@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"CIS_Backend_Server/iternal/app/model"
+	"context"
 )
 
 type Service interface {
@@ -11,10 +12,10 @@ type Service interface {
 }
 
 type NewsService interface {
-	CreateNews(news *model.News) error
-	GetNews() ([]model.News, error)
-	UpdateNews(news *model.News) error
-	DeleteNews(id int) error
+	CreateNews(ctx context.Context, news *model.News) error
+	GetNews(ctx context.Context) ([]model.News, error)
+	UpdateNews(ctx context.Context, news *model.News) error
+	DeleteNews(ctx context.Context, id int) error
 }
 
 type UsersService interface {

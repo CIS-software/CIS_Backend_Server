@@ -18,10 +18,9 @@ func (r *CalendarRepository) CreateTraining(c *model.Calendar) error {
 }
 
 func (r *CalendarRepository) GetTrainings() (trainings []model.Calendar, err error) {
-	rows, err := r.storage.db.Query("SELECT id, to_char(date, 'yyyy-MM-dd'), description " +
-		"FROM training_calendar ORDER BY date")
+	rows, err := r.storage.db.Query("SELECT id, date, description FROM training_calendar")
 	if err != nil {
-		logrus.Panic(err)
+		return nil, err
 	}
 	defer rows.Close()
 
