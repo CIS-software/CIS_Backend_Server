@@ -1,25 +1,23 @@
 package main
 
 import (
+	"CIS_Backend_Server/config"
 	"CIS_Backend_Server/iternal/app/apiserver"
-	"github.com/BurntSushi/toml"
 	"github.com/gorilla/mux"
+	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	configPath string = "go/bin/config.toml"
-)
-
 func main() {
-	config := apiserver.NewConfig()
+	cfg := config.NewConfig()
 	logger := logrus.New()
+
 	router := mux.NewRouter()
-	_, err := toml.DecodeFile(configPath, config)
+	err := cleanenv.ReadEnv(cfg)
 	if err != nil {
 		logrus.Panic(err)
 	}
-	if err := apiserver.Start(config, logger, router); err != nil {
+	if err := apiserver.Start(cfg, logger, router); err != nil {
 		logrus.Fatal(err)
 	}
 }

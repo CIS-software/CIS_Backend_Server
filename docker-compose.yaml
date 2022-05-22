@@ -24,7 +24,7 @@ services:
   postgres:
     image: postgres:14.2
     container_name: db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_DB: "postgres"
       POSTGRES_USER: "postgres"
@@ -45,6 +45,7 @@ services:
       - 9001
     volumes:
       - data1-1:/data
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s

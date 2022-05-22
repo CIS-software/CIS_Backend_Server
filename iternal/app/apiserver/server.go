@@ -39,13 +39,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) configureRouter() {
-	s.router.HandleFunc("/user/{id}", s.handler.Users().HandleGetUser()).Methods("POST")
+	s.router.HandleFunc("/user/{id}", s.handler.Users().HandleGetUser()).Methods("GET")
 	s.router.HandleFunc("/create-user", s.handler.Users().HandleCreateUser()).Methods("POST")
 	s.router.HandleFunc("/login", s.handler.Users().HandleLogin()).Methods("POST")
 	s.router.HandleFunc("/update-tokens", s.handler.Users().HandleUpdateTokens()).Methods("POST")
 	s.router.HandleFunc("/news", s.handler.News().HandleCreateNews()).Methods("POST")
 	s.router.HandleFunc("/news", s.handler.News().HandleGetNews()).Methods("GET")
-	s.router.HandleFunc("/news", s.handler.News().HandleUpdateNews()).Methods("PUT")
+	s.router.HandleFunc("/news/{id}", s.handler.News().HandleUpdateNews()).Methods("PUT")
 	s.router.HandleFunc("/news/{id}", s.handler.News().HandleDeleteNews()).Methods("DELETE")
 	s.router.HandleFunc("/create-training", s.handler.Calendar().HandleCreateTraining()).Methods("POST")
 	s.router.HandleFunc("/get-calendar", s.handler.Calendar().HandleGetTrainingCalendar()).Methods("GET")

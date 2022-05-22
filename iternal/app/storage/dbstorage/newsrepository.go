@@ -16,15 +16,11 @@ type NewsRepository struct {
 	storage *Storage
 }
 
-const bucketName = "min1"
-
 func (r *NewsRepository) CreateNews(ctx context.Context, n *model.News) error {
-	//n.Name = model.GenerateObjectName(n)
 	n.Name = fmt.Sprintf("%s.%s", uuid.NewString(), "png")
-	logrus.Info(n.Name)
 	_, err := r.storage.minioClient.PutObject(
 		ctx,
-		bucketName,
+		r.storage.bucketName,
 		n.Name,
 		n.Payload,
 		n.Size,
@@ -45,7 +41,7 @@ func (r *NewsRepository) CreateNews(ctx context.Context, n *model.News) error {
 func (r *NewsRepository) GetNews(ctx context.Context) (news []model.News, err error) {
 	rows, err := r.storage.db.Query("SELECT * FROM news ORDER BY time_date DESC")
 	if err != nil {
-		logrus.Panic(err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -61,19 +57,17 @@ func (r *NewsRepository) GetNews(ctx context.Context) (news []model.News, err er
 			"response-content-disposition",
 			"attachment; filename=\""+n.Name+"\"",
 		)
-		url, err := r.storage.minioClient.PresignedGetObject(
+		photoURL, err := r.storage.minioClient.PresignedGetObject(
 			ctx,
-			bucketName,
+			r.storage.bucketName,
 			n.Name,
 			time.Hour,
 			reqParams,
 		)
-		//TODO сделать правильную проверку на ошибки
 		if err != nil {
-			logrus.Error(err)
+			return nil, err
 		}
-		n.URL = url.String()
-		logrus.Info(n.URL)
+		n.URL = photoURL.String()
 		news = append(news, n)
 	}
 
@@ -87,7 +81,6 @@ func (r *NewsRepository) UpdateNews(ctx context.Context, n *model.News) error {
 	}
 	name := n.Name
 	n.Name = fmt.Sprintf("%s.%s", uuid.NewString(), "png")
-	logrus.Info(n.Name)
 
 	result, err := r.storage.db.Exec("UPDATE news SET title = $1, description = $2, photo = $3 WHERE id = $4",
 		n.Title,
@@ -104,7 +97,7 @@ func (r *NewsRepository) UpdateNews(ctx context.Context, n *model.News) error {
 
 	_, err = r.storage.minioClient.PutObject(
 		ctx,
-		bucketName,
+		r.storage.bucketName,
 		n.Name,
 		n.Payload,
 		n.Size,
@@ -114,7 +107,7 @@ func (r *NewsRepository) UpdateNews(ctx context.Context, n *model.News) error {
 		return err
 	}
 
-	err = r.storage.minioClient.RemoveObject(ctx, bucketName, name, minio.RemoveObjectOptions{})
+	err = r.storage.minioClient.RemoveObject(ctx, r.storage.bucketName, name, minio.RemoveObjectOptions{})
 	return err
 }
 
@@ -133,6 +126,6 @@ func (r *NewsRepository) DeleteNews(ctx context.Context, id int) error {
 		return errors.New("news not found")
 	}
 
-	err = r.storage.minioClient.RemoveObject(ctx, bucketName, name, minio.RemoveObjectOptions{})
+	err = r.storage.minioClient.RemoveObject(ctx, r.storage.bucketName, name, minio.RemoveObjectOptions{})
 	return err
 }

@@ -1,6 +1,7 @@
 package dbstorage
 
 import (
+	"CIS_Backend_Server/config"
 	"CIS_Backend_Server/iternal/app/storage"
 	"database/sql"
 	_ "github.com/lib/pq" // ...
@@ -13,18 +14,26 @@ type Storage struct {
 	usersRepository    *UsersRepository
 	calendarRepository *CalendarRepository
 	minioClient        *minio.Client
-	SecretKey          string
-	AccessLifetime     int
-	RefreshLifetime    int
+	bucketName         string
+	ConfigJWT
 }
 
-func New(db *sql.DB, minioClient *minio.Client, secretKey string, accessLifetime, refreshLifetime int) *Storage {
+type ConfigJWT struct {
+	SecretKey       string
+	AccessLifetime  int
+	RefreshLifetime int
+}
+
+func New(db *sql.DB, mc *minio.Client, cfg config.JWT, bucketName string) *Storage {
 	return &Storage{
-		db:              db,
-		minioClient:     minioClient,
-		SecretKey:       secretKey,
-		AccessLifetime:  accessLifetime,
-		RefreshLifetime: refreshLifetime,
+		db:          db,
+		minioClient: mc,
+		bucketName:  bucketName,
+		ConfigJWT: ConfigJWT{
+			SecretKey:       cfg.SecretKey,
+			AccessLifetime:  cfg.AccessTokenLifetime,
+			RefreshLifetime: cfg.RefreshTokenLifetime,
+		},
 	}
 }
 

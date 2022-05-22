@@ -75,11 +75,9 @@ func (h *HandlerNews) HandleUpdateNews() http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
-		//vars := mux.Vars(r)
-		//id, err := strconv.Atoi(vars["id"])
-		var err error
-		req.Id, err = strconv.Atoi(r.FormValue("id"))
-		if err != nil || req.Id < 1 {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil || id < 1 {
 			utils.Error(w, r, http.StatusNotFound, err)
 			return
 		}
@@ -99,23 +97,17 @@ func (h *HandlerNews) HandleUpdateNews() http.HandlerFunc {
 		defer src.Close()
 
 		n := &model.News{
-			Id:          req.Id,
+			Id:          id,
 			Title:       req.Title,
 			Description: req.Description,
 			Photo:       *object,
 		}
 
-		//e := &model.News{
-		//	Id:          id,
-		//	Title:       req.Title,
-		//	Description: req.Description,
-		//	//Photo:       req.Photo,
-		//}
 		if err := h.handler.service.News().UpdateNews(r.Context(), n); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		data := fmt.Sprintf("{News from id: %d has been successfully changed}", req.Id)
+		data := fmt.Sprintf("{News from id: %d has been successfully changed}", id)
 		utils.Respond(w, r, http.StatusOK, data)
 	}
 }
