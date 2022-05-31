@@ -25,8 +25,7 @@ type HandlerUsers interface {
 }
 
 type HandlersCalendar interface {
-	HandleCreateTraining() http.HandlerFunc
+	HandleCreateTrainingWeek() http.HandlerFunc
 	HandleGetTrainingCalendar() http.HandlerFunc
 	HandleUpdateTraining() http.HandlerFunc
-	HandleDeleteTraining() http.HandlerFunc
 }

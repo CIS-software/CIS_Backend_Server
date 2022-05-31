@@ -47,10 +47,9 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/news", s.handler.News().HandleGetNews()).Methods("GET")
 	s.router.HandleFunc("/news/{id}", s.handler.News().HandleUpdateNews()).Methods("PUT")
 	s.router.HandleFunc("/news/{id}", s.handler.News().HandleDeleteNews()).Methods("DELETE")
-	s.router.HandleFunc("/create-training", s.handler.Calendar().HandleCreateTraining()).Methods("POST")
+	s.router.HandleFunc("/create-training", s.handler.Calendar().HandleCreateTrainingWeek()).Methods("POST")
 	s.router.HandleFunc("/get-calendar", s.handler.Calendar().HandleGetTrainingCalendar()).Methods("GET")
-	s.router.HandleFunc("/training/{id}", s.handler.Calendar().HandleUpdateTraining()).Methods("PUT")
-	s.router.HandleFunc("/training/{id}", s.handler.Calendar().HandleDeleteTraining()).Methods("DELETE")
+	s.router.HandleFunc("/training/{day}", s.handler.Calendar().HandleUpdateTraining()).Methods("PUT")
 	s.router.Use(s.JwtAuthentication)
 }
 

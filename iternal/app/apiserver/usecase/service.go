@@ -26,8 +26,7 @@ type UsersService interface {
 }
 
 type CalendarService interface {
-	CreateTraining(calendar *model.Calendar) error
+	CreateTrainingWeek(calendar map[string]string) error
 	GetTrainings() (trainings []model.Calendar, err error)
 	UpdateTrainings(calendar *model.Calendar) error
-	DeleteTrainings(id int) error
 }

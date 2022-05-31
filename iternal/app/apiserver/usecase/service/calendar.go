@@ -6,8 +6,8 @@ type CalendarService struct {
 	service *Service
 }
 
-func (s *CalendarService) CreateTraining(calendar *model.Calendar) error {
-	return s.service.storage.Calendar().CreateTraining(calendar)
+func (s *CalendarService) CreateTrainingWeek(calendar map[string]string) error {
+	return s.service.storage.Calendar().CreateTrainingWeek(calendar)
 }
 
 func (s *CalendarService) GetTrainings() (trainings []model.Calendar, err error) {
@@ -16,8 +16,4 @@ func (s *CalendarService) GetTrainings() (trainings []model.Calendar, err error)
 
 func (s *CalendarService) UpdateTrainings(calendar *model.Calendar) error {
 	return s.service.storage.Calendar().UpdateTrainings(calendar)
-}
-
-func (s *CalendarService) DeleteTrainings(id int) error {
-	return s.service.storage.Calendar().DeleteTrainings(id)
 }

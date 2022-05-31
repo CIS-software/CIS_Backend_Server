@@ -16,7 +16,7 @@ type Postgres struct {
 }
 
 type Minio struct {
-	EndPoint        string `env:"ENDPOINT" env-default:"cis-software.cf:9000"`
+	EndPoint        string `env:"ENDPOINT" env-default:"gateway.docker.internal:9000"`
 	BucketName      string `env:"BUCKET_NAME" env-default:"min1"`
 	AccessKeyID     string `env:"ACCESS_KEY_ID" env-default:"minio"`
 	SecretAccessKey string `env:"SECRET_ACCESS_KEY" env-default:"minio123"`

@@ -10,15 +10,29 @@ type CalendarRepository struct {
 	storage *Storage
 }
 
-func (r *CalendarRepository) CreateTraining(c *model.Calendar) error {
-	return r.storage.db.QueryRow("INSERT INTO training_calendar (date, description) VALUES ($1, $2) RETURNING id",
-		c.Date,
-		c.Description,
-	).Scan(&c.Id)
+func (r *CalendarRepository) CreateTrainingWeek(calendar map[string]string) error {
+	days := [7]string{"пн", "вт", "ср", "чт", "пт", "сб", "вс"}
+	for index := range days {
+		if calendar[days[index]] == "" {
+			return errors.New("wrong day")
+		}
+	}
+
+	_, err := r.storage.db.Query("INSERT INTO training_calendar (day, description) "+
+		"VALUES ($1, $2), ($3, $4), ($5, $6), ($7, $8), ($9, $10), ($11, $12), ($13, $14)",
+		days[0], calendar[days[0]],
+		days[1], calendar[days[1]],
+		days[2], calendar[days[2]],
+		days[3], calendar[days[3]],
+		days[4], calendar[days[4]],
+		days[5], calendar[days[5]],
+		days[6], calendar[days[6]],
+	)
+	return err
 }
 
-func (r *CalendarRepository) GetTrainings() (trainings []model.Calendar, err error) {
-	rows, err := r.storage.db.Query("SELECT id, date, description FROM training_calendar")
+func (r *CalendarRepository) GetTrainings() (calendar []model.Calendar, err error) {
+	rows, err := r.storage.db.Query("SELECT day, description FROM training_calendar ORDER BY day")
 	if err != nil {
 		return nil, err
 	}
@@ -26,33 +40,22 @@ func (r *CalendarRepository) GetTrainings() (trainings []model.Calendar, err err
 
 	for rows.Next() {
 		c := model.Calendar{}
-		err := rows.Scan(&c.Id, &c.Date, &c.Description)
+		err := rows.Scan(&c.Day, &c.Description)
 		if err != nil {
 			logrus.Error(err)
 			continue
 		}
-		trainings = append(trainings, c)
+		calendar = append(calendar, c)
 	}
-	return trainings, err
+	return calendar, err
 }
 
-func (r *CalendarRepository) UpdateTrainings(c *model.Calendar) error {
-	result, err := r.storage.db.Exec("UPDATE training_calendar SET date = $1, description = $2 WHERE id = $3",
-		c.Date,
-		c.Description,
-		c.Id,
+func (r *CalendarRepository) UpdateTrainings(calendar *model.Calendar) error {
+	result, err := r.storage.db.Exec("UPDATE training_calendar SET day = $1, description = $2 WHERE day = $3",
+		calendar.Day,
+		calendar.Description,
+		calendar.Day,
 	)
-	if err != nil {
-		return err
-	}
-	if count, _ := result.RowsAffected(); count != 1 {
-		return errors.New("training not found")
-	}
-	return err
-}
-
-func (r *CalendarRepository) DeleteTrainings(id int) error {
-	result, err := r.storage.db.Exec("DELETE FROM training_calendar WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
