@@ -5,6 +5,7 @@ CREATE TABLE news (
     photo text,
     time_date timestamp(0) default now()
 );
+
 CREATE TABLE user_auth (
     id bigserial not null unique primary key,
     email varchar(50) not null,
@@ -13,6 +14,7 @@ CREATE TABLE user_auth (
     access_token varchar(200),
     refresh_token varchar(200)
 );
+
 CREATE TABLE user_profile (
     user_id bigint not null unique primary key,
     name varchar(20) not null,
@@ -24,8 +26,10 @@ CREATE TABLE user_profile (
     id_iko varchar(20),
     foreign key (user_id) references user_auth (id) on delete cascade on update cascade
 );
+
+CREATE TYPE training_week AS ENUM ('пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс');
 CREATE TABLE training_calendar (
-    id smallserial not null unique,
-    date varchar(2) not null unique,
+    day training_week not null unique,
     description varchar(50) not null
 );
+

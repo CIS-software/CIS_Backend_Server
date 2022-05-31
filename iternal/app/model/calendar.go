@@ -1,7 +1,6 @@
 package model
 
 type Calendar struct {
-	Id          int    `json:"id"`
-	Date        string `json:"date"`
+	Day         string `json:"day"`
 	Description string `json:"description"`
 }
