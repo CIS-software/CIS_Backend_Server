@@ -27,7 +27,7 @@ CREATE TABLE user_profile (
     foreign key (user_id) references user_auth (id) on delete cascade on update cascade
 );
 
-CREATE TYPE training_week AS ENUM ('пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс');
+CREATE TYPE training_week AS ENUM ('Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс');
 CREATE TABLE training_calendar (
     day training_week not null unique,
     description varchar(50) not null

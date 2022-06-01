@@ -11,7 +11,7 @@ type CalendarRepository struct {
 }
 
 func (r *CalendarRepository) CreateTrainingWeek(calendar map[string]string) error {
-	days := [7]string{"пн", "вт", "ср", "чт", "пт", "сб", "вс"}
+	days := [7]string{"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"}
 	for index := range days {
 		if calendar[days[index]] == "" {
 			return errors.New("wrong day")
