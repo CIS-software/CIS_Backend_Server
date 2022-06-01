@@ -6,6 +6,9 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    depends_on:
+      - nginx
+      - postgres
     ports:
       - 8080:8080
 
