@@ -2,38 +2,40 @@ package apiserver
 
 import (
 	"CIS_Backend_Server/config"
-	"CIS_Backend_Server/iternal/app/apiserver/entities/handlers"
-	"CIS_Backend_Server/iternal/app/apiserver/usecase/service"
-	"CIS_Backend_Server/iternal/app/storage/dbstorage"
+	"CIS_Backend_Server/iternal/handlers/handlers"
+	"CIS_Backend_Server/iternal/service/service"
+	"CIS_Backend_Server/iternal/storage/dbstorage"
 	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
-func Start(cfg *config.Config, logger *logrus.Logger, router *mux.Router) error {
+func Start(cfg *config.Config, log *log.Logger, router *mux.Router) error {
+	log.Info("Database connection check")
 	db, err := newDB(cfg.Postgres)
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 
+	log.Info("Instantiating minio client")
 	mc, err := minio.New(cfg.Minio.EndPoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.Minio.AccessKeyID, cfg.Minio.SecretAccessKey, ""),
 		Secure: cfg.Minio.UseSSL,
 	})
 	if err != nil {
-		logger.Fatalln(err)
+		return err
 	}
-	defer db.Close()
 
 	storage := dbstorage.New(db, mc, cfg.JWT, cfg.Minio.BucketName)
-	handler := handlers.New(service.New(storage))
-	srv := newServer(logger, router, handler, cfg.JWT.SecretKey)
-	logger.Info("Configuration read successfully")
-	logger.Info("Server start...")
+	service_ := service.New(storage)
+	handlers_ := handlers.New(service_)
+	srv := newServer(log, router, handlers_, cfg.JWT.SecretKey)
+	log.Info("Server start...")
 	return http.ListenAndServe(cfg.BindAddr, srv)
 }
 

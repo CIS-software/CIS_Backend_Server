@@ -29,6 +29,6 @@ type JWT struct {
 	RefreshTokenLifetime int    `env:"REFRESH_TOKEN_LIFETIME" env-default:"525600"`
 }
 
-func NewConfig() *Config {
+func New() *Config {
 	return new(Config)
 }

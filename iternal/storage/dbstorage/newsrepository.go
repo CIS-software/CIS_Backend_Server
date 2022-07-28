@@ -1,7 +1,7 @@
 package dbstorage
 
 import (
-	"CIS_Backend_Server/iternal/app/model"
+	"CIS_Backend_Server/iternal/model"
 	"context"
 	"errors"
 	"fmt"
@@ -16,7 +16,7 @@ type NewsRepository struct {
 	storage *Storage
 }
 
-func (r *NewsRepository) CreateNews(ctx context.Context, n *model.News) error {
+func (r *NewsRepository) Create(ctx context.Context, n *model.News) error {
 	n.Name = fmt.Sprintf("%s.%s", uuid.NewString(), "png")
 	_, err := r.storage.minioClient.PutObject(
 		ctx,
@@ -38,7 +38,7 @@ func (r *NewsRepository) CreateNews(ctx context.Context, n *model.News) error {
 	).Scan(&n.Id, &n.TimeDate)
 }
 
-func (r *NewsRepository) GetNews(ctx context.Context) (news []model.News, err error) {
+func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error) {
 	rows, err := r.storage.db.Query("SELECT * FROM news ORDER BY time_date DESC")
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (r *NewsRepository) GetNews(ctx context.Context) (news []model.News, err er
 	return news, err
 }
 
-func (r *NewsRepository) UpdateNews(ctx context.Context, n *model.News) error {
+func (r *NewsRepository) Change(ctx context.Context, n *model.News) error {
 	err := r.storage.db.QueryRow("SELECT photo FROM news WHERE id = $1", n.Id).Scan(&n.Name)
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (r *NewsRepository) UpdateNews(ctx context.Context, n *model.News) error {
 	return err
 }
 
-func (r *NewsRepository) DeleteNews(ctx context.Context, id int) error {
+func (r *NewsRepository) Delete(ctx context.Context, id int) error {
 	var name string
 	err := r.storage.db.QueryRow("SELECT photo FROM news WHERE id = $1", id).Scan(&name)
 	if err != nil {

@@ -1,9 +1,9 @@
 package apiserver
 
 import (
-	"CIS_Backend_Server/iternal/app/apiserver/entities/handlers"
-	"CIS_Backend_Server/iternal/app/apiserver/utils"
-	"CIS_Backend_Server/iternal/app/model"
+	"CIS_Backend_Server/iternal/handlers/handlers"
+	"CIS_Backend_Server/iternal/model"
+	"CIS_Backend_Server/iternal/utils"
 	"context"
 	"errors"
 	"github.com/golang-jwt/jwt"
@@ -21,7 +21,6 @@ type Server struct {
 }
 
 func newServer(logger *logrus.Logger, router *mux.Router, handler *handlers.Handlers, secretKey string) *Server {
-
 	s := &Server{
 		router:    router,
 		logger:    logger,
@@ -39,17 +38,23 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) configureRouter() {
-	s.router.HandleFunc("/user/{id}", s.handler.Users().HandleGetUser()).Methods("GET")
-	s.router.HandleFunc("/create-user", s.handler.Users().HandleCreateUser()).Methods("POST")
-	s.router.HandleFunc("/login", s.handler.Users().HandleLogin()).Methods("POST")
-	s.router.HandleFunc("/update-tokens", s.handler.Users().HandleUpdateTokens()).Methods("POST")
-	s.router.HandleFunc("/news", s.handler.News().HandleCreateNews()).Methods("POST")
-	s.router.HandleFunc("/news", s.handler.News().HandleGetNews()).Methods("GET")
-	s.router.HandleFunc("/news/{id}", s.handler.News().HandleUpdateNews()).Methods("PUT")
-	s.router.HandleFunc("/news/{id}", s.handler.News().HandleDeleteNews()).Methods("DELETE")
-	s.router.HandleFunc("/create-training", s.handler.Calendar().HandleCreateTrainingWeek()).Methods("POST")
-	s.router.HandleFunc("/get-calendar", s.handler.Calendar().HandleGetTrainingCalendar()).Methods("GET")
-	s.router.HandleFunc("/training/{day}", s.handler.Calendar().HandleUpdateTraining()).Methods("PUT")
+	//Users URLs
+	s.router.HandleFunc("/user/{id}", s.handler.Users().Get()).Methods("GET")
+	s.router.HandleFunc("/create-user", s.handler.Users().Create()).Methods("POST")
+	s.router.HandleFunc("/login", s.handler.Users().Login()).Methods("POST")
+	s.router.HandleFunc("/update-tokens", s.handler.Users().RefreshTokens()).Methods("POST")
+
+	//News URLs
+	s.router.HandleFunc("/news", s.handler.News().Create()).Methods("POST")
+	s.router.HandleFunc("/news", s.handler.News().Get()).Methods("GET")
+	s.router.HandleFunc("/news/{id}", s.handler.News().Change()).Methods("PUT")
+	s.router.HandleFunc("/news/{id}", s.handler.News().Delete()).Methods("DELETE")
+
+	//Calendar URLs
+	s.router.HandleFunc("/create-training", s.handler.Calendar().CreateWeek()).Methods("POST")
+	s.router.HandleFunc("/get-calendar", s.handler.Calendar().GetWeek()).Methods("GET")
+	s.router.HandleFunc("/training/{day}", s.handler.Calendar().ChangeDay()).Methods("PUT")
+
 	s.router.Use(s.JwtAuthentication)
 }
 

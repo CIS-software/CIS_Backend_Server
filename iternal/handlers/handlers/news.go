@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"CIS_Backend_Server/iternal/app/apiserver/utils"
-	"CIS_Backend_Server/iternal/app/dto"
-	"CIS_Backend_Server/iternal/app/model"
+	"CIS_Backend_Server/iternal/dto"
+	"CIS_Backend_Server/iternal/model"
+	"CIS_Backend_Server/iternal/utils"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -15,7 +15,7 @@ type HandlerNews struct {
 	handler *Handlers
 }
 
-func (h *HandlerNews) HandleCreateNews() http.HandlerFunc {
+func (h *HandlerNews) Create() http.HandlerFunc {
 	type request struct {
 		Title       string
 		Description string
@@ -41,7 +41,7 @@ func (h *HandlerNews) HandleCreateNews() http.HandlerFunc {
 			Description: req.Description,
 			Photo:       *object,
 		}
-		if err := h.handler.service.News().CreateNews(r.Context(), n); err != nil {
+		if err := h.handler.service.News().Create(r.Context(), n); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
@@ -56,9 +56,9 @@ func (h *HandlerNews) HandleCreateNews() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerNews) HandleGetNews() http.HandlerFunc {
+func (h *HandlerNews) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := h.handler.service.News().GetNews(r.Context())
+		data, err := h.handler.service.News().Get(r.Context())
 		if err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
@@ -67,7 +67,7 @@ func (h *HandlerNews) HandleGetNews() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerNews) HandleUpdateNews() http.HandlerFunc {
+func (h *HandlerNews) Change() http.HandlerFunc {
 	type request struct {
 		Id          int
 		Title       string
@@ -103,7 +103,7 @@ func (h *HandlerNews) HandleUpdateNews() http.HandlerFunc {
 			Photo:       *object,
 		}
 
-		if err := h.handler.service.News().UpdateNews(r.Context(), n); err != nil {
+		if err := h.handler.service.News().Change(r.Context(), n); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
@@ -112,7 +112,7 @@ func (h *HandlerNews) HandleUpdateNews() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerNews) HandleDeleteNews() http.HandlerFunc {
+func (h *HandlerNews) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
@@ -120,7 +120,7 @@ func (h *HandlerNews) HandleDeleteNews() http.HandlerFunc {
 			utils.Error(w, r, http.StatusNotFound, err)
 			return
 		}
-		if err := h.handler.service.News().DeleteNews(r.Context(), id); err != nil {
+		if err := h.handler.service.News().Delete(r.Context(), id); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}

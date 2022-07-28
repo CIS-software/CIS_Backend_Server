@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"CIS_Backend_Server/iternal/app/apiserver/utils"
-	"CIS_Backend_Server/iternal/app/dto"
-	"CIS_Backend_Server/iternal/app/model"
+	"CIS_Backend_Server/iternal/dto"
+	"CIS_Backend_Server/iternal/model"
+	"CIS_Backend_Server/iternal/utils"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
@@ -15,7 +15,7 @@ type HandlerUser struct {
 	handler *Handlers
 }
 
-func (h *HandlerUser) HandleGetUser() http.HandlerFunc {
+func (h *HandlerUser) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
@@ -36,7 +36,7 @@ func (h *HandlerUser) HandleGetUser() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerUser) HandleCreateUser() http.HandlerFunc {
+func (h *HandlerUser) Create() http.HandlerFunc {
 	type request struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -81,7 +81,7 @@ func (h *HandlerUser) HandleCreateUser() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerUser) HandleLogin() http.HandlerFunc {
+func (h *HandlerUser) Login() http.HandlerFunc {
 	type request struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -112,7 +112,7 @@ func (h *HandlerUser) HandleLogin() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerUser) HandleUpdateTokens() http.HandlerFunc {
+func (h *HandlerUser) RefreshTokens() http.HandlerFunc {
 	type request struct {
 		RefreshToken string `json:"refresh-token"`
 	}

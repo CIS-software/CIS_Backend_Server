@@ -2,7 +2,7 @@ package dbstorage
 
 import (
 	"CIS_Backend_Server/config"
-	"CIS_Backend_Server/iternal/app/storage"
+	"CIS_Backend_Server/iternal/storage"
 	"database/sql"
 	_ "github.com/lib/pq" // ...
 	"github.com/minio/minio-go/v7"

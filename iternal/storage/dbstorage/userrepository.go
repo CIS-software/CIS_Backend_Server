@@ -1,7 +1,7 @@
 package dbstorage
 
 import (
-	"CIS_Backend_Server/iternal/app/model"
+	"CIS_Backend_Server/iternal/model"
 	"database/sql"
 	"errors"
 	"github.com/golang-jwt/jwt"

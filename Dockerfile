@@ -4,7 +4,7 @@ WORKDIR $GOPATH/src/cis_backend_server/
 COPY go.sum go.mod ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /go/bin/cis_backend_server ./cmd/main
+RUN CGO_ENABLED=0 GOOS=linux go build -o /go/bin/cis_backend_server ./cmd
 
 FROM alpine
 COPY --from=0 /go/bin/cis_backend_server /go/bin/cis_backend_server

@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"CIS_Backend_Server/iternal/app/apiserver/utils"
-	"CIS_Backend_Server/iternal/app/model"
+	"CIS_Backend_Server/iternal/model"
+	"CIS_Backend_Server/iternal/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +15,7 @@ type HandlerCalendar struct {
 	handler *Handlers
 }
 
-func (h *HandlerCalendar) HandleCreateTrainingWeek() http.HandlerFunc {
+func (h *HandlerCalendar) CreateWeek() http.HandlerFunc {
 	type request struct {
 		TrainingCalendar map[string]string `json:"training-calendar"`
 	}
@@ -32,7 +32,7 @@ func (h *HandlerCalendar) HandleCreateTrainingWeek() http.HandlerFunc {
 			return
 		}
 
-		if err := h.handler.service.Calendar().CreateTrainingWeek(req.TrainingCalendar); err != nil {
+		if err := h.handler.service.Calendar().CreateWeek(req.TrainingCalendar); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
@@ -42,9 +42,9 @@ func (h *HandlerCalendar) HandleCreateTrainingWeek() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerCalendar) HandleGetTrainingCalendar() http.HandlerFunc {
+func (h *HandlerCalendar) GetWeek() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := h.handler.service.Calendar().GetTrainings()
+		data, err := h.handler.service.Calendar().GetWeek()
 		if err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
@@ -53,7 +53,7 @@ func (h *HandlerCalendar) HandleGetTrainingCalendar() http.HandlerFunc {
 	}
 }
 
-func (h *HandlerCalendar) HandleUpdateTraining() http.HandlerFunc {
+func (h *HandlerCalendar) ChangeDay() http.HandlerFunc {
 	type request struct {
 		Description string `json:"description"`
 	}
@@ -70,7 +70,7 @@ func (h *HandlerCalendar) HandleUpdateTraining() http.HandlerFunc {
 			Day:         day,
 			Description: req.Description,
 		}
-		if err := h.handler.service.Calendar().UpdateTrainings(c); err != nil {
+		if err := h.handler.service.Calendar().ChangeDay(c); err != nil {
 			utils.Error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}

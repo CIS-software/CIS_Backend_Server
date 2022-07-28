@@ -1,6 +1,8 @@
 package service
 
-import "CIS_Backend_Server/iternal/app/model"
+import (
+	"CIS_Backend_Server/iternal/model"
+)
 
 type UsersService struct {
 	service *Service

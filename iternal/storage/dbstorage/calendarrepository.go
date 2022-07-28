@@ -1,7 +1,7 @@
 package dbstorage
 
 import (
-	"CIS_Backend_Server/iternal/app/model"
+	"CIS_Backend_Server/iternal/model"
 	"errors"
 	"github.com/sirupsen/logrus"
 )
@@ -10,7 +10,7 @@ type CalendarRepository struct {
 	storage *Storage
 }
 
-func (r *CalendarRepository) CreateTrainingWeek(calendar map[string]string) error {
+func (r *CalendarRepository) CreateWeek(calendar map[string]string) error {
 	days := [7]string{"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"}
 	for index := range days {
 		if calendar[days[index]] == "" {
@@ -31,7 +31,7 @@ func (r *CalendarRepository) CreateTrainingWeek(calendar map[string]string) erro
 	return err
 }
 
-func (r *CalendarRepository) GetTrainings() (calendar []model.Calendar, err error) {
+func (r *CalendarRepository) GetWeek() (calendar []model.Calendar, err error) {
 	rows, err := r.storage.db.Query("SELECT day, description FROM training_calendar ORDER BY day")
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (r *CalendarRepository) GetTrainings() (calendar []model.Calendar, err erro
 	return calendar, err
 }
 
-func (r *CalendarRepository) UpdateTrainings(calendar *model.Calendar) error {
+func (r *CalendarRepository) ChangeDay(calendar *model.Calendar) error {
 	result, err := r.storage.db.Exec("UPDATE training_calendar SET day = $1, description = $2 WHERE day = $3",
 		calendar.Day,
 		calendar.Description,
