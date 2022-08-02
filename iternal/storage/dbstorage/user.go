@@ -30,8 +30,7 @@ func (r *UsersRepository) CreateUser(a *model.UserAuth, u *model.User) error {
 	}
 
 	return r.storage.db.QueryRow(
-		"INSERT INTO user_profile (user_id, name, surname, town, age, weight, belt, id_iko)"+
-			" VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		"INSERT INTO user_profile (user_id, name, surname, town, age, weight, belt, id_iko) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
 		a.Id,
 		u.Name,
 		u.Surname,
