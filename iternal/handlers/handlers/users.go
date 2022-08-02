@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"CIS_Backend_Server/iternal/dto"
+	"CIS_Backend_Server/iternal/handlers/response"
 	"CIS_Backend_Server/iternal/model"
-	"CIS_Backend_Server/iternal/utils"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
@@ -21,18 +21,18 @@ func (h *HandlerUser) Get() http.HandlerFunc {
 		id, err := strconv.Atoi(vars["id"])
 		if id < 1 {
 			err = errors.New("id can't be negative")
-			utils.Error(w, r, http.StatusNotFound, err)
+			response.Error(w, http.StatusNotFound, err)
 			return
 		} else if err != nil {
-			utils.Error(w, r, http.StatusNotFound, err)
+			response.Error(w, http.StatusNotFound, err)
 			return
 		}
 		user, err := h.handler.service.Users().GetUser(id)
 		if err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		utils.Respond(w, r, http.StatusOK, user)
+		response.Respond(w, http.StatusOK, user)
 	}
 }
 
@@ -49,7 +49,7 @@ func (h *HandlerUser) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := new(request)
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			utils.Error(w, r, http.StatusBadRequest, err)
+			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -64,7 +64,7 @@ func (h *HandlerUser) Create() http.HandlerFunc {
 			Age:     req.Age,
 		}
 		if err := h.handler.service.Users().CreateUser(a, u); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
 
@@ -77,7 +77,7 @@ func (h *HandlerUser) Create() http.HandlerFunc {
 			Age:     u.Age,
 		}
 
-		utils.Respond(w, r, http.StatusCreated, data)
+		response.Respond(w, http.StatusCreated, data)
 	}
 }
 
@@ -90,7 +90,7 @@ func (h *HandlerUser) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			utils.Error(w, r, http.StatusBadRequest, err)
+			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -100,7 +100,7 @@ func (h *HandlerUser) Login() http.HandlerFunc {
 		}
 		t := new(model.Tokens)
 		if err := h.handler.service.Users().Login(a, t); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
 		data := &model.Tokens{
@@ -108,7 +108,7 @@ func (h *HandlerUser) Login() http.HandlerFunc {
 			AccessToken:  t.AccessToken,
 			RefreshToken: t.RefreshToken,
 		}
-		utils.Respond(w, r, http.StatusCreated, data)
+		response.Respond(w, http.StatusCreated, data)
 	}
 }
 
@@ -120,7 +120,7 @@ func (h *HandlerUser) RefreshTokens() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			utils.Error(w, r, http.StatusBadRequest, err)
+			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -128,7 +128,7 @@ func (h *HandlerUser) RefreshTokens() http.HandlerFunc {
 			RefreshToken: req.RefreshToken,
 		}
 		if err := h.handler.service.Users().UpdateTokens(t); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
 		data := &model.Tokens{
@@ -136,6 +136,6 @@ func (h *HandlerUser) RefreshTokens() http.HandlerFunc {
 			AccessToken:  t.AccessToken,
 			RefreshToken: t.RefreshToken,
 		}
-		utils.Respond(w, r, http.StatusCreated, data)
+		response.Respond(w, http.StatusCreated, data)
 	}
 }

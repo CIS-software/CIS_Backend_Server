@@ -2,8 +2,8 @@ package apiserver
 
 import (
 	"CIS_Backend_Server/iternal/handlers/handlers"
+	"CIS_Backend_Server/iternal/handlers/response"
 	"CIS_Backend_Server/iternal/model"
-	"CIS_Backend_Server/iternal/utils"
 	"context"
 	"errors"
 	"github.com/golang-jwt/jwt"
@@ -55,6 +55,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/get-calendar", s.handler.Calendar().GetWeek()).Methods("GET")
 	s.router.HandleFunc("/training/{day}", s.handler.Calendar().ChangeDay()).Methods("PUT")
 
+	//JwtAuthentication Middleware
 	s.router.Use(s.JwtAuthentication)
 }
 
@@ -71,13 +72,13 @@ func (s *Server) JwtAuthentication(next http.Handler) http.Handler {
 
 		tokenHeader := r.Header.Get("Authorization")
 		if tokenHeader == "" {
-			utils.Error(w, r, http.StatusUnauthorized, errors.New("missing auth token"))
+			response.Error(w, http.StatusUnauthorized, errors.New("missing auth token"))
 			return
 		}
 
 		splitted := strings.Split(tokenHeader, " ")
 		if len(splitted) != 2 {
-			utils.Error(w, r, http.StatusUnauthorized, errors.New("invalid auth token, does not match the format: Bearer {token-body}"))
+			response.Error(w, http.StatusUnauthorized, errors.New("invalid auth token, does not match the format: Bearer {token-body}"))
 			return
 		}
 
@@ -87,12 +88,12 @@ func (s *Server) JwtAuthentication(next http.Handler) http.Handler {
 			return []byte(s.secretKey), nil
 		})
 		if err != nil {
-			utils.Error(w, r, http.StatusUnauthorized, errors.New("wrong token"))
+			response.Error(w, http.StatusUnauthorized, errors.New("wrong token"))
 			return
 		}
 
 		if !token.Valid {
-			utils.Error(w, r, http.StatusUnauthorized, errors.New("token is not valid"))
+			response.Error(w, http.StatusUnauthorized, errors.New("token is not valid"))
 			return
 		}
 

@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"CIS_Backend_Server/iternal/dto"
+	"CIS_Backend_Server/iternal/handlers/response"
 	"CIS_Backend_Server/iternal/model"
-	"CIS_Backend_Server/iternal/utils"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -27,7 +27,7 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 
 		src, hdr, err := r.FormFile("photo")
 		if err != nil {
-			utils.Error(w, r, http.StatusBadRequest, errors.New("wrong photo format"))
+			response.Error(w, http.StatusBadRequest, errors.New("wrong photo format"))
 			return
 		}
 		object := &model.Photo{
@@ -42,7 +42,7 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 			Photo:       *object,
 		}
 		if err := h.handler.service.News().Create(r.Context(), n); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
 		data := &dto.News{
@@ -52,7 +52,7 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 			Photo:       n.Name,
 			TimeDate:    n.TimeDate,
 		}
-		utils.Respond(w, r, http.StatusCreated, data)
+		response.Respond(w, http.StatusCreated, data)
 	}
 }
 
@@ -60,10 +60,10 @@ func (h *HandlerNews) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := h.handler.service.News().Get(r.Context())
 		if err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		utils.Respond(w, r, http.StatusOK, data)
+		response.Respond(w, http.StatusOK, data)
 	}
 }
 
@@ -78,7 +78,7 @@ func (h *HandlerNews) Change() http.HandlerFunc {
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
 		if err != nil || id < 1 {
-			utils.Error(w, r, http.StatusNotFound, err)
+			response.Error(w, http.StatusNotFound, err)
 			return
 		}
 
@@ -87,7 +87,7 @@ func (h *HandlerNews) Change() http.HandlerFunc {
 
 		src, hdr, err := r.FormFile("photo")
 		if err != nil {
-			utils.Error(w, r, http.StatusBadRequest, errors.New("wrong photo format"))
+			response.Error(w, http.StatusBadRequest, errors.New("wrong photo format"))
 			return
 		}
 		object := &model.Photo{
@@ -104,11 +104,11 @@ func (h *HandlerNews) Change() http.HandlerFunc {
 		}
 
 		if err := h.handler.service.News().Change(r.Context(), n); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
 		data := fmt.Sprintf("{News from id: %d has been successfully changed}", id)
-		utils.Respond(w, r, http.StatusOK, data)
+		response.Respond(w, http.StatusOK, data)
 	}
 }
 
@@ -117,14 +117,14 @@ func (h *HandlerNews) Delete() http.HandlerFunc {
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
 		if err != nil || id < 1 {
-			utils.Error(w, r, http.StatusNotFound, err)
+			response.Error(w, http.StatusNotFound, err)
 			return
 		}
 		if err := h.handler.service.News().Delete(r.Context(), id); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
 		data := fmt.Sprintf("{News from id: %d was successfully deleted}", id)
-		utils.Respond(w, r, http.StatusOK, data)
+		response.Respond(w, http.StatusOK, data)
 	}
 }

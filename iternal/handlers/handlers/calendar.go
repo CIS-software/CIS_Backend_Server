@@ -1,15 +1,18 @@
 package handlers
 
 import (
+	"CIS_Backend_Server/iternal/handlers/response"
 	"CIS_Backend_Server/iternal/model"
-	"CIS_Backend_Server/iternal/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"net/http"
 )
+
+//var (
+//	ErrWeekNotCreated = errors.New("training week is not in the database")
+//)
 
 type HandlerCalendar struct {
 	handler *Handlers
@@ -23,33 +26,36 @@ func (h *HandlerCalendar) CreateWeek() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			utils.Error(w, r, http.StatusBadRequest, err)
-			return
-		}
-		logrus.Info(req.TrainingCalendar, len(req.TrainingCalendar))
-		if len(req.TrainingCalendar) != 7 {
-			utils.Error(w, r, http.StatusBadRequest, errors.New("map size is not 7, expected 7 key-value pairs"))
+			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
 
-		if err := h.handler.service.Calendar().CreateWeek(req.TrainingCalendar); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+		if err := h.handler.service.Calendar().CreateWeek(req.TrainingCalendar); err.Error != nil {
+			if err.Error == model.ErrWeekAlreadyCreated {
+				response.Error(w, http.StatusBadRequest, model.ErrWeekAlreadyCreated)
+				return
+			}
+			response.Error(w, err.Status, err.Error)
 			return
 		}
 
-		data := fmt.Sprint("Training week successfully created")
-		utils.Respond(w, r, http.StatusCreated, data)
+		success := fmt.Sprint("Training week successfully created")
+		response.Respond(w, http.StatusCreated, success)
 	}
 }
 
 func (h *HandlerCalendar) GetWeek() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := h.handler.service.Calendar().GetWeek()
+		calendar, err := h.handler.service.Calendar().GetWeek()
 		if err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		utils.Respond(w, r, http.StatusOK, data)
+		if calendar == nil {
+			response.Error(w, http.StatusBadRequest, model.ErrWeekNotCreated)
+			return
+		}
+		response.Respond(w, http.StatusOK, calendar)
 	}
 }
 
@@ -62,7 +68,7 @@ func (h *HandlerCalendar) ChangeDay() http.HandlerFunc {
 		day := vars["day"]
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			utils.Error(w, r, http.StatusBadRequest, err)
+			response.Error(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -71,10 +77,14 @@ func (h *HandlerCalendar) ChangeDay() http.HandlerFunc {
 			Description: req.Description,
 		}
 		if err := h.handler.service.Calendar().ChangeDay(c); err != nil {
-			utils.Error(w, r, http.StatusUnprocessableEntity, err)
+			if errors.Is(err, model.ErrWeekNotCreated) {
+				response.Error(w, http.StatusBadRequest, model.ErrWeekNotCreated)
+				return
+			}
+			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		data := fmt.Sprint("{Training day successfully changed}")
-		utils.Respond(w, r, http.StatusOK, data)
+		success := fmt.Sprint("Training day successfully changed")
+		response.Respond(w, http.StatusOK, success)
 	}
 }
