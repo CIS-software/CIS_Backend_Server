@@ -28,5 +28,5 @@ type UsersService interface {
 type CalendarService interface {
 	CreateWeek(calendar map[string]string) *model.Err
 	GetWeek() (trainings []model.Calendar, err error)
-	ChangeDay(calendar *model.Calendar) error
+	ChangeDay(calendar *model.Calendar) *model.Err
 }
