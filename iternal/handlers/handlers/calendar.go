@@ -28,11 +28,6 @@ func (h *HandlerCalendar) CreateWeek() http.HandlerFunc {
 		}
 
 		if err := h.handler.service.Calendar().CreateWeek(req.TrainingCalendar); err.Error != nil {
-			//checking for an error of an already created week
-			if err.Error == model.ErrWeekAlreadyCreated {
-				response.Error(w, http.StatusBadRequest, model.ErrWeekAlreadyCreated)
-				return
-			}
 			response.Error(w, err.Status, err.Error)
 			return
 		}
@@ -68,6 +63,7 @@ func (h *HandlerCalendar) ChangeDay() http.HandlerFunc {
 		vars := mux.Vars(r)
 		day := vars["day"]
 		req := &request{}
+
 		//checking that the structure and data type match in the request body
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			response.Error(w, http.StatusBadRequest, err)
@@ -78,7 +74,8 @@ func (h *HandlerCalendar) ChangeDay() http.HandlerFunc {
 			Day:         day,
 			Description: req.Description,
 		}
-		if err := h.handler.service.Calendar().ChangeDay(c); err != nil {
+
+		if err := h.handler.service.Calendar().ChangeDay(c); err.Error != nil {
 			response.Error(w, err.Status, err.Error)
 			return
 		}

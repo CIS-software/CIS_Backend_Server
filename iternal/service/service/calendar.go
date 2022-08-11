@@ -3,6 +3,7 @@ package service
 import (
 	"CIS_Backend_Server/iternal/model"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -22,28 +23,20 @@ func (s *CalendarService) CreateWeek(calendar map[string]string) *model.Err {
 
 	//checking the correctness of the names of the days of the week and their uniqueness
 	for index := range day {
-		var dayOfWeek = 0
-		for key := range calendar {
-			dayOfWeek++
-			if key == day[index] {
-				break
-			}
-			if dayOfWeek == 7 {
-				return &model.Err{Status: http.StatusBadRequest, Error: model.ErrIncorrectDaysOfWeek}
-			}
+		if _, err := calendar[day[index]]; err == false {
+			return &model.Err{Status: http.StatusBadRequest, Error: model.ErrIncorrectDaysOfWeek}
 		}
 	}
 
-	//checking the description of each day for the min and max number of characters
-	for _, description := range calendar {
-		if len(description) < 2 {
-			return &model.Err{Status: http.StatusBadRequest, Error: model.ErrNotEnoughCharacters}
-		}
-		if len(description) > 50 {
+	//checking for an excess of the number of characters in the description of each day
+	for _, key := range day {
+		fmt.Println(len([]rune(calendar[key])))
+		if len([]rune(calendar[key])) > 50 {
 			return &model.Err{Status: http.StatusBadRequest, Error: model.ErrCharacterLimitExceeded}
 		}
 	}
 
+	//send calendar to storage
 	err := s.service.storage.Calendar().CreateWeek(calendar)
 
 	//error check week already created
@@ -55,16 +48,15 @@ func (s *CalendarService) CreateWeek(calendar map[string]string) *model.Err {
 }
 
 func (s *CalendarService) GetWeek() (trainings []model.Calendar, err error) {
+	//query calendar from storage
 	return s.service.storage.Calendar().GetWeek()
 }
 
 func (s *CalendarService) ChangeDay(calendar *model.Calendar) *model.Err {
 	var err error
 
-	//checking the description of the day for the minimum and maximum number of characters
-	if len(calendar.Description) < 2 {
-		return &model.Err{Status: http.StatusBadRequest, Error: model.ErrNotEnoughCharacters}
-	}
+	//check for exceeding the number of characters in the description
+	fmt.Println(len(calendar.Description), "|", len([]rune(calendar.Description)))
 	if len(calendar.Description) > 50 {
 		return &model.Err{Status: http.StatusBadRequest, Error: model.ErrCharacterLimitExceeded}
 	}
@@ -81,7 +73,7 @@ func (s *CalendarService) ChangeDay(calendar *model.Calendar) *model.Err {
 	}
 
 	//checking for a table not created error
-	if errors.Is(err, model.ErrWeekAlreadyCreated) {
+	if errors.Is(err, model.ErrWeekNotCreated) {
 		return &model.Err{Status: http.StatusBadRequest, Error: err}
 	}
 
