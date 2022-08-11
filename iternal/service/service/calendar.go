@@ -3,7 +3,6 @@ package service
 import (
 	"CIS_Backend_Server/iternal/model"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
@@ -30,7 +29,6 @@ func (s *CalendarService) CreateWeek(calendar map[string]string) *model.Err {
 
 	//checking for an excess of the number of characters in the description of each day
 	for _, key := range day {
-		fmt.Println(len([]rune(calendar[key])))
 		if len([]rune(calendar[key])) > 50 {
 			return &model.Err{Status: http.StatusBadRequest, Error: model.ErrCharacterLimitExceeded}
 		}
@@ -56,7 +54,6 @@ func (s *CalendarService) ChangeDay(calendar *model.Calendar) *model.Err {
 	var err error
 
 	//check for exceeding the number of characters in the description
-	fmt.Println(len(calendar.Description), "|", len([]rune(calendar.Description)))
 	if len(calendar.Description) > 50 {
 		return &model.Err{Status: http.StatusBadRequest, Error: model.ErrCharacterLimitExceeded}
 	}
