@@ -35,7 +35,7 @@ func Start(cfg *config.Config, log *log.Logger, router *mux.Router) error {
 	service_ := service.New(storage)
 	handlers_ := handlers.New(service_)
 
-	srv := newServer(log, router, handlers_, cfg.JWT.SecretKey)
+	srv := newServer(log, router, handlers_, cfg.JWT.SecretKeyAccess)
 	log.Info("Server start...")
 	return http.ListenAndServe(cfg.BindAddr, srv)
 }

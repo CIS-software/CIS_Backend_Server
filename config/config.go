@@ -24,7 +24,8 @@ type Minio struct {
 }
 
 type JWT struct {
-	SecretKey            string `env:"SECRET_KEY" env-default:"key123"`
+	SecretKeyAccess      string `env:"SECRET_KEY_ACCESS" env-default:"key123"`
+	SecretKeyRefresh     string `env:"SECRET_KEY_REFRESH" env-default:"key321"`
 	AccessTokenLifetime  int    `env:"ACCESS_TOKEN_LIFETIME" env-default:"20"`
 	RefreshTokenLifetime int    `env:"REFRESH_TOKEN_LIFETIME" env-default:"525600"`
 }

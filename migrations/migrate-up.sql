@@ -10,9 +10,7 @@ CREATE TABLE user_auth (
     id bigserial not null unique primary key,
     email varchar(50) not null,
     user_type varchar(20) default 'user',
-    encrypted_password varchar(100) not null,
-    access_token varchar(200),
-    refresh_token varchar(200)
+    encrypted_password varchar(100) not null
 );
 
 CREATE TABLE user_profile (

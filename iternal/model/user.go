@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/golang-jwt/jwt"
-	"time"
 )
 
 type User struct {
@@ -18,8 +17,8 @@ type User struct {
 
 type UserAuth struct {
 	Id                int    `json:"id"`
-	Email             string `json:"email"`
-	Password          string `json:"-"`
+	Email             string `json:"email" validate:"email,max=50"`
+	Password          string `json:"-" validate:"min=4,max=50"`
 	EncryptedPassword string `json:"-"`
 }
 
@@ -28,17 +27,4 @@ type Tokens struct {
 	AccessToken  string `json:"access-token,omitempty"`
 	RefreshToken string `json:"refresh-token,omitempty"`
 	jwt.StandardClaims
-}
-
-func CreateToken(id, lifetime int, secretKey string) (string, error) {
-	claims := &Tokens{
-		TokenId: id,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * time.Duration(lifetime)).Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(secretKey))
-	return tokenString, err
 }

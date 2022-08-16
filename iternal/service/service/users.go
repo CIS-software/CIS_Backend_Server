@@ -2,6 +2,7 @@ package service
 
 import (
 	"CIS_Backend_Server/iternal/model"
+	"github.com/go-playground/validator/v10"
 )
 
 type UsersService struct {
@@ -9,6 +10,11 @@ type UsersService struct {
 }
 
 func (s *UsersService) CreateUser(userAuth *model.UserAuth, user *model.User) error {
+	v := validator.New()
+	err := v.Struct(userAuth)
+	if err != nil {
+		return model.ErrEmailPasswordNotValid
+	}
 	return s.service.storage.Users().CreateUser(userAuth, user)
 }
 
@@ -17,6 +23,11 @@ func (s *UsersService) GetUser(id int) (users *model.User, err error) {
 }
 
 func (s *UsersService) Login(userAuth *model.UserAuth, tokens *model.Tokens) error {
+	v := validator.New()
+	err := v.Struct(userAuth)
+	if err != nil {
+		return model.ErrEmailPasswordNotValid
+	}
 	return s.service.storage.Users().Login(userAuth, tokens)
 }
 

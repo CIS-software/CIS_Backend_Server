@@ -19,7 +19,8 @@ type Storage struct {
 }
 
 type ConfigJWT struct {
-	SecretKey       string
+	AccessKey       string
+	RefreshKey      string
 	AccessLifetime  int
 	RefreshLifetime int
 }
@@ -30,7 +31,8 @@ func New(db *sql.DB, mc *minio.Client, cfg config.JWT, bucketName string) *Stora
 		minioClient: mc,
 		bucketName:  bucketName,
 		ConfigJWT: ConfigJWT{
-			SecretKey:       cfg.SecretKey,
+			AccessKey:       cfg.SecretKeyAccess,
+			RefreshKey:      cfg.SecretKeyRefresh,
 			AccessLifetime:  cfg.AccessTokenLifetime,
 			RefreshLifetime: cfg.RefreshTokenLifetime,
 		},
