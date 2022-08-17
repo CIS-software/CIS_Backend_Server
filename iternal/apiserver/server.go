@@ -2,15 +2,9 @@ package apiserver
 
 import (
 	"CIS_Backend_Server/iternal/handlers/handlers"
-	"CIS_Backend_Server/iternal/handlers/response"
-	"CIS_Backend_Server/iternal/model"
-	"context"
-	"errors"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"strings"
 )
 
 type Server struct {
@@ -20,7 +14,7 @@ type Server struct {
 	secretKey string
 }
 
-func newServer(logger *logrus.Logger, router *mux.Router, handler *handlers.Handlers, secretKey string) *Server {
+func serverNew(logger *logrus.Logger, router *mux.Router, handler *handlers.Handlers, secretKey string) *Server {
 	s := &Server{
 		router:    router,
 		logger:    logger,
@@ -57,48 +51,4 @@ func (s *Server) configureRouter() {
 
 	//JwtAuthentication Middleware
 	s.router.Use(s.JwtAuthentication)
-}
-
-func (s *Server) JwtAuthentication(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		notAuth := []string{"/login", "/create-user", "/update-tokens"}
-		requestPath := r.URL.Path
-		for _, value := range notAuth {
-			if value == requestPath {
-				next.ServeHTTP(w, r)
-				return
-			}
-		}
-
-		tokenHeader := r.Header.Get("Authorization")
-		if tokenHeader == "" {
-			response.Error(w, http.StatusUnauthorized, errors.New("missing auth token"))
-			return
-		}
-
-		splitted := strings.Split(tokenHeader, " ")
-		if len(splitted) != 2 {
-			response.Error(w, http.StatusUnauthorized, errors.New("invalid auth token, does not match the format: Bearer {token-body}"))
-			return
-		}
-
-		tokenPart := splitted[1]
-		t := &model.Tokens{}
-		token, err := jwt.ParseWithClaims(tokenPart, t, func(token *jwt.Token) (interface{}, error) {
-			return []byte(s.secretKey), nil
-		})
-		if err != nil {
-			response.Error(w, http.StatusUnauthorized, errors.New("wrong token"))
-			return
-		}
-
-		if !token.Valid {
-			response.Error(w, http.StatusUnauthorized, errors.New("token is not valid"))
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "user", t.TokenId)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
 }

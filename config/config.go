@@ -7,6 +7,7 @@ type Config struct {
 	Minio
 	JWT
 }
+
 type Postgres struct {
 	User     string `env:"USER" env-default:"postgres"`
 	Password string `env:"PASSWORD" env-default:"Jad108fsdlknzc"`
@@ -24,10 +25,13 @@ type Minio struct {
 }
 
 type JWT struct {
-	SecretKeyAccess      string `env:"SECRET_KEY_ACCESS" env-default:"key123"`
-	SecretKeyRefresh     string `env:"SECRET_KEY_REFRESH" env-default:"key321"`
-	AccessTokenLifetime  int    `env:"ACCESS_TOKEN_LIFETIME" env-default:"20"`
-	RefreshTokenLifetime int    `env:"REFRESH_TOKEN_LIFETIME" env-default:"525600"`
+	SecretKeyAccess  string `env:"SECRET_KEY_ACCESS" env-default:"key123"`
+	SecretKeyRefresh string `env:"SECRET_KEY_REFRESH" env-default:"key321"`
+
+	//token lifetime in minutes
+	//refresh token lifetime 365 days
+	AccessTokenLifetime  int `env:"ACCESS_TOKEN_LIFETIME" env-default:"20"`
+	RefreshTokenLifetime int `env:"REFRESH_TOKEN_LIFETIME" env-default:"525600"`
 }
 
 func New() *Config {

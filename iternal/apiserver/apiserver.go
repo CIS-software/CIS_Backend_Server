@@ -16,6 +16,7 @@ import (
 
 func Start(cfg *config.Config, log *log.Logger, router *mux.Router) error {
 	log.Info("Database connection check")
+	//open db and check connection
 	db, err := newDB(cfg.Postgres)
 	if err != nil {
 		return err
@@ -23,6 +24,7 @@ func Start(cfg *config.Config, log *log.Logger, router *mux.Router) error {
 	defer db.Close()
 
 	log.Info("Instantiating minio client")
+	//instantiate minio client with options
 	mc, err := minio.New(cfg.Minio.EndPoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.Minio.AccessKeyID, cfg.Minio.SecretAccessKey, ""),
 		Secure: cfg.Minio.UseSSL,
@@ -31,12 +33,13 @@ func Start(cfg *config.Config, log *log.Logger, router *mux.Router) error {
 		return err
 	}
 
-	storage := dbstorage.New(db, mc, cfg.JWT, cfg.Minio.BucketName)
+	//instantiate storage, service, handlers, server
+	storage := dbstorage.New(db, mc, cfg.JWT, cfg.BucketName)
 	service_ := service.New(storage)
 	handlers_ := handlers.New(service_)
+	srv := serverNew(log, router, handlers_, cfg.SecretKeyAccess)
 
-	srv := newServer(log, router, handlers_, cfg.JWT.SecretKeyAccess)
-	log.Info("Server start...")
+	log.Info("Server start on port: ", cfg.BindAddr)
 	return http.ListenAndServe(cfg.BindAddr, srv)
 }
 
