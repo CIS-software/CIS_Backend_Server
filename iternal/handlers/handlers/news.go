@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type HandlerNews struct {
@@ -22,17 +23,27 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
+
 		req.Title = r.FormValue("title")
 		req.Description = r.FormValue("description")
 
 		src, hdr, err := r.FormFile("photo")
-		if err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("wrong photo format"))
+		//file existence check
+		if errors.Is(err, http.ErrMissingFile) {
+			response.Error(w, http.StatusBadRequest, http.ErrMissingFile)
 			return
 		}
+
+		//server unexpected error
+		if err != nil {
+			response.Error(w, http.StatusUnprocessableEntity, err)
+			return
+		}
+
 		object := &model.Photo{
-			Payload: src,
-			Size:    hdr.Size,
+			Payload:   src,
+			NameSlice: strings.Split(hdr.Filename, "."),
+			Size:      hdr.Size,
 		}
 		defer src.Close()
 
@@ -41,10 +52,32 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 			Description: req.Description,
 			Photo:       *object,
 		}
+
 		if err := h.handler.service.News().Create(r.Context(), n); err != nil {
+			//with wrong file extension
+			if errors.Is(err, model.ErrWrongContentType) {
+				response.Error(w, http.StatusBadRequest, model.ErrWrongContentType)
+				return
+			}
+
+			//with a long file name
+			if errors.Is(err, model.ErrLongFileName) {
+				response.Error(w, http.StatusBadRequest, model.ErrLongFileName)
+				return
+			}
+
+			//with not validated title and/or description
+			if errors.Is(err, model.ErrTitleDescriptionNotValid) {
+				response.Error(w, http.StatusBadRequest, model.ErrTitleDescriptionNotValid)
+				return
+			}
+
+			//server unexpected error
 			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
+
+		//response body structure
 		data := &dto.News{
 			Id:          n.Id,
 			Title:       n.Title,
@@ -52,6 +85,7 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 			Photo:       n.Name,
 			TimeDate:    n.TimeDate,
 		}
+
 		response.Respond(w, http.StatusCreated, data)
 	}
 }

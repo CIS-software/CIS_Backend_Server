@@ -21,6 +21,13 @@ var (
 	ErrEmailPasswordNotValid = errors.New("email and/or password do not meet the requirements")
 )
 
+//news errors
+var (
+	ErrWrongContentType         = errors.New("invalid file type, expected png or jpeg")
+	ErrTitleDescriptionNotValid = errors.New("title cannot be empty and must not exceed 50 characters, and description 1500 characters")
+	ErrLongFileName             = errors.New("character limit exceeded in file name")
+)
+
 type Err struct {
 	Status int
 	Error  error

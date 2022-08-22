@@ -10,11 +10,12 @@ type UsersService struct {
 }
 
 func (s *UsersService) CreateUser(userAuth *model.UserAuth, user *model.User) error {
+	//email and password validation
 	v := validator.New()
-	err := v.Struct(userAuth)
-	if err != nil {
+	if err := v.Struct(userAuth); err != nil {
 		return model.ErrEmailPasswordNotValid
 	}
+
 	return s.service.storage.Users().CreateUser(userAuth, user)
 }
 
@@ -23,11 +24,12 @@ func (s *UsersService) GetUser(id int) (users *model.User, err error) {
 }
 
 func (s *UsersService) Login(userAuth *model.UserAuth, tokens *model.Tokens) error {
+	//email and password validation
 	v := validator.New()
-	err := v.Struct(userAuth)
-	if err != nil {
+	if err := v.Struct(userAuth); err != nil {
 		return model.ErrEmailPasswordNotValid
 	}
+
 	return s.service.storage.Users().Login(userAuth, tokens)
 }
 

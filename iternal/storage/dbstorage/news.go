@@ -17,25 +17,49 @@ type NewsRepository struct {
 }
 
 func (r *NewsRepository) Create(ctx context.Context, n *model.News) error {
-	n.Name = fmt.Sprintf("%s.%s", uuid.NewString(), "png")
+	//adds the last element of the slice from the previous last element
+	//then the penultimate element is replaced by a new uuid
+	n.NameSlice = append(n.NameSlice, n.NameSlice[len(n.NameSlice)-1])
+	n.NameSlice[len(n.NameSlice)-2] = uuid.NewString()
+
+	//getting a photo name string from a slice, keeping all the dots
+	for index := range n.NameSlice {
+		//check for the last element, to skip the dot
+		if len(n.NameSlice) == index+1 {
+			n.Name = n.Name + n.NameSlice[index]
+			break
+		}
+		n.Name = n.Name + n.NameSlice[index] + "."
+	}
+
+	//sending photos to minio
 	_, err := r.storage.minioClient.PutObject(
 		ctx,
 		r.storage.bucketName,
 		n.Name,
 		n.Payload,
 		n.Size,
-		minio.PutObjectOptions{ContentType: "image/png"},
+		minio.PutObjectOptions{ContentType: n.ContentType},
 	)
 	if err != nil {
 		return err
 	}
 
-	return r.storage.db.QueryRow(
+	//sending to the database news content
+	row := r.storage.db.QueryRow(
 		"INSERT INTO news (title, description, photo) VALUES ($1, $2, $3) RETURNING id, time_date",
 		n.Title,
 		n.Description,
 		n.Name,
-	).Scan(&n.Id, &n.TimeDate)
+	)
+	if err := row.Err(); err != nil {
+		return err
+	}
+
+	//getting id and date with time and database
+	err = row.Scan(&n.Id, &n.TimeDate)
+
+	return err
 }
 
 func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error) {
