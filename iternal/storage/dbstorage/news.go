@@ -3,6 +3,7 @@ package dbstorage
 import (
 	"CIS_Backend_Server/iternal/model"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -56,14 +57,21 @@ func (r *NewsRepository) Create(ctx context.Context, n *model.News) error {
 		return err
 	}
 
-	//getting id and date with time and database
+	//getting id and date with time from database
 	err = row.Scan(&n.Id, &n.TimeDate)
 
 	return err
 }
 
 func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error) {
+	//getting all the news from the database
 	rows, err := r.storage.db.Query("SELECT * FROM news ORDER BY time_date DESC")
+
+	//checking for data in the database
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, sql.ErrNoRows
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -71,27 +79,36 @@ func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error)
 
 	for rows.Next() {
 		n := model.News{}
+
+		//getting id, title, description, photo title and date with time from database
 		err := rows.Scan(&n.Id, &n.Title, &n.Description, &n.Name, &n.TimeDate)
 		if err != nil {
 			logrus.Error(err)
 			continue
 		}
+
+		//setting request parameters for content
 		reqParams := make(url.Values)
 		reqParams.Set(
 			"response-content-disposition",
 			"attachment; filename=\""+n.Name+"\"",
 		)
+
+		//generates a presigned url which expires in a day
 		photoURL, err := r.storage.minioClient.PresignedGetObject(
 			ctx,
 			r.storage.bucketName,
 			n.Name,
-			time.Hour,
+			time.Hour*24,
 			reqParams,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		//url type to string type
 		n.URL = photoURL.String()
+
 		news = append(news, n)
 	}
 

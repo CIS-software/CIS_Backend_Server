@@ -4,6 +4,7 @@ import (
 	"CIS_Backend_Server/iternal/model"
 	"context"
 	"github.com/go-playground/validator/v10"
+	"strings"
 )
 
 type NewsService struct {
@@ -49,7 +50,26 @@ func (s *NewsService) Create(ctx context.Context, n *model.News) error {
 }
 
 func (s *NewsService) Get(ctx context.Context) ([]model.News, error) {
-	return s.service.storage.News().Get(ctx)
+	news, err := s.service.storage.News().Get(ctx)
+
+	//excluding uuid from photo title
+	for i := range news {
+		var name string
+		nameSlice := strings.Split(news[i].Name, ".")
+		for index := range nameSlice {
+			if index == len(nameSlice)-1 {
+				name = name + nameSlice[index]
+				break
+			}
+			if nameSlice[len(nameSlice)-2] == nameSlice[index] {
+				continue
+			}
+			name = name + nameSlice[index] + "."
+		}
+		news[i].Name = name
+	}
+
+	return news, err
 }
 
 func (s *NewsService) Change(ctx context.Context, n *model.News) error {

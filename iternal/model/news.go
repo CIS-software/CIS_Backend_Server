@@ -15,8 +15,8 @@ type News struct {
 type Photo struct {
 	Payload     io.Reader `json:"-"`
 	Name        string    `json:"name"`
-	NameSlice   []string  `json:"name-slice"`
-	ContentType string    `json:"content-type"`
+	NameSlice   []string  `json:"-"`
+	ContentType string    `json:"-"`
 	Size        int64     `json:"-"`
 	URL         string    `json:"url,omitempty"`
 }

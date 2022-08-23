@@ -4,6 +4,7 @@ import (
 	"CIS_Backend_Server/iternal/dto"
 	"CIS_Backend_Server/iternal/handlers/response"
 	"CIS_Backend_Server/iternal/model"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -93,10 +94,18 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 func (h *HandlerNews) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := h.handler.service.News().Get(r.Context())
+		//when there is no news in the database
+		if errors.Is(err, sql.ErrNoRows) {
+			response.Error(w, http.StatusBadRequest, sql.ErrNoRows)
+			return
+		}
+
+		//server unexpected error
 		if err != nil {
 			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
+
 		response.Respond(w, http.StatusOK, data)
 	}
 }
