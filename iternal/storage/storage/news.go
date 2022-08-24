@@ -1,11 +1,10 @@
-package dbstorage
+package storage
 
 import (
 	"CIS_Backend_Server/iternal/model"
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
@@ -18,26 +17,14 @@ type NewsRepository struct {
 }
 
 func (r *NewsRepository) Create(ctx context.Context, n *model.News) error {
-	//adds the last element of the slice from the previous last element
-	//then the penultimate element is replaced by a new uuid
-	n.NameSlice = append(n.NameSlice, n.NameSlice[len(n.NameSlice)-1])
-	n.NameSlice[len(n.NameSlice)-2] = uuid.NewString()
-
-	//getting a photo name string from a slice, keeping all the dots
-	for index := range n.NameSlice {
-		//check for the last element, to skip the dot
-		if len(n.NameSlice) == index+1 {
-			n.Name = n.Name + n.NameSlice[index]
-			break
-		}
-		n.Name = n.Name + n.NameSlice[index] + "."
-	}
+	//creating a unique photo name
+	nameGenerator(n)
 
 	//sending photos to minio
 	_, err := r.storage.minioClient.PutObject(
 		ctx,
 		r.storage.bucketName,
-		n.Name,
+		n.NameWithUUID,
 		n.Payload,
 		n.Size,
 		minio.PutObjectOptions{ContentType: n.ContentType},
@@ -51,9 +38,18 @@ func (r *NewsRepository) Create(ctx context.Context, n *model.News) error {
 		"INSERT INTO news (title, description, photo) VALUES ($1, $2, $3) RETURNING id, time_date",
 		n.Title,
 		n.Description,
-		n.Name,
+		n.NameWithUUID,
 	)
+
 	if err := row.Err(); err != nil {
+		//an error occurred in the database, deleting photos from minio
+		secondErr := r.storage.minioClient.RemoveObject(ctx, r.storage.bucketName, n.NameWithUUID, minio.RemoveObjectOptions{})
+
+		//error when rolling back changes from minio, returning both errors from database and minio
+		if secondErr != nil {
+			return errors.New("first error: " + err.Error() + " | second error: " + secondErr.Error())
+		}
+
 		return err
 	}
 
@@ -69,7 +65,7 @@ func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error)
 
 	//checking for data in the database
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, sql.ErrNoRows
+		return nil, model.ErrNewsNotFound
 	}
 
 	if err != nil {
@@ -81,7 +77,7 @@ func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error)
 		n := model.News{}
 
 		//getting id, title, description, photo title and date with time from database
-		err := rows.Scan(&n.Id, &n.Title, &n.Description, &n.Name, &n.TimeDate)
+		err := rows.Scan(&n.Id, &n.Title, &n.Description, &n.NameWithUUID, &n.TimeDate)
 		if err != nil {
 			logrus.Error(err)
 			continue
@@ -91,14 +87,14 @@ func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error)
 		reqParams := make(url.Values)
 		reqParams.Set(
 			"response-content-disposition",
-			"attachment; filename=\""+n.Name+"\"",
+			"attachment; filename=\""+n.NameWithUUID+"\"",
 		)
 
 		//generates a presigned url which expires in a day
 		photoURL, err := r.storage.minioClient.PresignedGetObject(
 			ctx,
 			r.storage.bucketName,
-			n.Name,
+			n.NameWithUUID,
 			time.Hour*24,
 			reqParams,
 		)
@@ -116,57 +112,86 @@ func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error)
 }
 
 func (r *NewsRepository) Change(ctx context.Context, n *model.News) error {
-	err := r.storage.db.QueryRow("SELECT photo FROM news WHERE id = $1", n.Id).Scan(&n.Name)
+	//checking the existence of the updated news in the database
+	err := r.storage.db.QueryRow("SELECT photo FROM news WHERE id = $1", n.Id).Scan(&n.NameWithUUID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return model.ErrNewsNotFound
+	}
 	if err != nil {
 		return err
 	}
-	name := n.Name
-	n.Name = fmt.Sprintf("%s.%s", uuid.NewString(), "png")
 
-	result, err := r.storage.db.Exec("UPDATE news SET title = $1, description = $2, photo = $3 WHERE id = $4",
+	//creating a unique photo name
+	nameGenerator(n)
+
+	//changing the news in the database according to new data
+	_, err = r.storage.db.Exec("UPDATE news SET title = $1, description = $2, photo = $3 WHERE id = $4",
 		n.Title,
 		n.Description,
-		n.Name,
+		n.NameWithUUID,
 		n.Id,
 	)
 	if err != nil {
 		return err
 	}
-	if count, _ := result.RowsAffected(); count != 1 {
-		return errors.New("news not found")
-	}
 
+	//adding a new photo news
 	_, err = r.storage.minioClient.PutObject(
 		ctx,
 		r.storage.bucketName,
-		n.Name,
+		n.NameWithUUID,
 		n.Payload,
 		n.Size,
-		minio.PutObjectOptions{ContentType: "image/png"},
+		minio.PutObjectOptions{ContentType: n.ContentType},
 	)
+
 	if err != nil {
+		//rolling back changes to the database
+		_, secondErr := r.storage.db.Exec("DELETE FROM news WHERE id = $1", n.Id)
+
+		//checking for database errors when reverting changes, returning two errors from minio and from the database
+		if secondErr != nil {
+			return errors.New("first error: " + err.Error() + " | second error: " + secondErr.Error())
+		}
+
 		return err
 	}
 
-	err = r.storage.minioClient.RemoveObject(ctx, r.storage.bucketName, name, minio.RemoveObjectOptions{})
+	//delete old news photo
+	err = r.storage.minioClient.RemoveObject(ctx, r.storage.bucketName, n.NameWithUUID, minio.RemoveObjectOptions{})
+
 	return err
 }
 
 func (r *NewsRepository) Delete(ctx context.Context, id int) error {
 	var name string
+
+	//getting photo name by id news
 	err := r.storage.db.QueryRow("SELECT photo FROM news WHERE id = $1", id).Scan(&name)
+	if errors.Is(err, sql.ErrNoRows) {
+		return model.ErrNewsNotFound
+	}
 	if err != nil {
 		return err
 	}
 
-	result, err := r.storage.db.Exec("DELETE FROM news WHERE id = $1", id)
+	//deleting news from the database
+	_, err = r.storage.db.Exec("DELETE FROM news WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
-	if count, _ := result.RowsAffected(); count != 1 {
-		return errors.New("news not found")
-	}
 
+	//deleting news from minio
 	err = r.storage.minioClient.RemoveObject(ctx, r.storage.bucketName, name, minio.RemoveObjectOptions{})
+
 	return err
+}
+
+//nameGenerator generating a unique photo name by embedding an uuid before the file extension
+func nameGenerator(n *model.News) {
+	if string(n.Name[len(n.Name)-5]) == "." {
+		n.NameWithUUID = n.Name[:len(n.Name)-4] + uuid.NewString() + n.Name[len(n.Name)-5:]
+	} else {
+		n.NameWithUUID = n.Name[:len(n.Name)-3] + uuid.NewString() + n.Name[len(n.Name)-4:]
+	}
 }

@@ -1,4 +1,4 @@
-package dbstorage
+package storage
 
 import (
 	"CIS_Backend_Server/iternal/model"

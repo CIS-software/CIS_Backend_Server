@@ -4,7 +4,6 @@ import (
 	"CIS_Backend_Server/iternal/model"
 	"context"
 	"github.com/go-playground/validator/v10"
-	"strings"
 )
 
 type NewsService struct {
@@ -12,38 +11,9 @@ type NewsService struct {
 }
 
 func (s *NewsService) Create(ctx context.Context, n *model.News) error {
-	//check for file type png or jpeg
-	switch n.NameSlice[len(n.NameSlice)-1] {
-	case "png", "PNG":
-		n.ContentType = "image/png"
-	case "jpg", "jpeg", "JPG", "JPEG", "jpe", "JPE":
-		n.ContentType = "image/jpeg"
-	default:
-		return model.ErrWrongContentType
-	}
-
-	//photo title length check
-	//maximum number of characters in the photo title field in the database is 80:
-	//37 - uuid and dot, 4 - extension, 39 - photo title
-	var nameLength int
-	for index := range n.NameSlice {
-		//checking for the last element of the slice, photo extension, it is not considered
-		if index == len(n.NameSlice)-1 {
-			break
-		}
-
-		//number of cell characters + dot character
-		nameLength = nameLength + len(n.NameSlice[index]) + 1
-	}
-
-	if nameLength > 39 {
-		return model.ErrLongFileName
-	}
-
-	//title and description validation
-	v := validator.New()
-	if err := v.Struct(n); err != nil {
-		return model.ErrTitleDescriptionNotValid
+	//validation of received data from the client
+	if err := newsValidation(n); err != nil {
+		return err
 	}
 
 	return s.service.storage.News().Create(ctx, n)
@@ -54,17 +24,11 @@ func (s *NewsService) Get(ctx context.Context) ([]model.News, error) {
 
 	//excluding uuid from photo title
 	for i := range news {
-		var name string
-		nameSlice := strings.Split(news[i].Name, ".")
-		for index := range nameSlice {
-			if index == len(nameSlice)-1 {
-				name = name + nameSlice[index]
-				break
-			}
-			if nameSlice[len(nameSlice)-2] == nameSlice[index] {
-				continue
-			}
-			name = name + nameSlice[index] + "."
+		var name = news[i].NameWithUUID
+		if string(name[len(name)-5]) == "." {
+			name = name[:len(name)-4-37] + name[len(name)-4:]
+		} else {
+			name = name[:len(name)-3-37] + name[len(name)-3:]
 		}
 		news[i].Name = name
 	}
@@ -73,9 +37,38 @@ func (s *NewsService) Get(ctx context.Context) ([]model.News, error) {
 }
 
 func (s *NewsService) Change(ctx context.Context, n *model.News) error {
+	//validation of received data from the client
+	if err := newsValidation(n); err != nil {
+		return err
+	}
+
 	return s.service.storage.News().Change(ctx, n)
 }
 
 func (s *NewsService) Delete(ctx context.Context, id int) error {
 	return s.service.storage.News().Delete(ctx, id)
+}
+
+//newsValidation validation of file extension, photo name length, news title and description
+func newsValidation(n *model.News) error {
+	//check for file type png or jpeg
+	switch n.Name[len(n.Name)-4:] {
+	case ".png", ".PNG":
+		n.ContentType = "image/png"
+	case ".jpg", "jpeg", ".JPG", "JPEG", ".jpe", ".JPE":
+		if n.Name[len(n.Name)-5:] != ".jpeg" && n.Name[len(n.Name)-5:] != ".JPEG" {
+			return model.ErrWrongContentType
+		}
+		n.ContentType = "image/jpeg"
+	default:
+		return model.ErrWrongContentType
+	}
+
+	//title and description validation
+	v := validator.New()
+	if err := v.Struct(n); err != nil {
+		return model.ErrNewsNotValid
+	}
+
+	return nil
 }

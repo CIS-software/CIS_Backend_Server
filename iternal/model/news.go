@@ -13,10 +13,10 @@ type News struct {
 }
 
 type Photo struct {
-	Payload     io.Reader `json:"-"`
-	Name        string    `json:"name"`
-	NameSlice   []string  `json:"-"`
-	ContentType string    `json:"-"`
-	Size        int64     `json:"-"`
-	URL         string    `json:"url,omitempty"`
+	Payload      io.Reader `json:"-"`
+	Name         string    `json:"name" validate:"max=43"`
+	NameWithUUID string    `json:"-"`
+	ContentType  string    `json:"-"`
+	Size         int64     `json:"-"`
+	URL          string    `json:"url,omitempty"`
 }

@@ -4,13 +4,11 @@ import (
 	"CIS_Backend_Server/iternal/dto"
 	"CIS_Backend_Server/iternal/handlers/response"
 	"CIS_Backend_Server/iternal/model"
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type HandlerNews struct {
@@ -29,6 +27,7 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 		req.Description = r.FormValue("description")
 
 		src, hdr, err := r.FormFile("photo")
+
 		//file existence check
 		if errors.Is(err, http.ErrMissingFile) {
 			response.Error(w, http.StatusBadRequest, http.ErrMissingFile)
@@ -42,9 +41,9 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 		}
 
 		object := &model.Photo{
-			Payload:   src,
-			NameSlice: strings.Split(hdr.Filename, "."),
-			Size:      hdr.Size,
+			Payload: src,
+			Name:    hdr.Filename,
+			Size:    hdr.Size,
 		}
 		defer src.Close()
 
@@ -68,8 +67,8 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 			}
 
 			//with not validated title and/or description
-			if errors.Is(err, model.ErrTitleDescriptionNotValid) {
-				response.Error(w, http.StatusBadRequest, model.ErrTitleDescriptionNotValid)
+			if errors.Is(err, model.ErrNewsNotValid) {
+				response.Error(w, http.StatusBadRequest, model.ErrNewsNotValid)
 				return
 			}
 
@@ -95,8 +94,8 @@ func (h *HandlerNews) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := h.handler.service.News().Get(r.Context())
 		//when there is no news in the database
-		if errors.Is(err, sql.ErrNoRows) {
-			response.Error(w, http.StatusBadRequest, sql.ErrNoRows)
+		if errors.Is(err, model.ErrNewsNotFound) {
+			response.Error(w, http.StatusBadRequest, model.ErrNewsNotFound)
 			return
 		}
 
@@ -118,9 +117,18 @@ func (h *HandlerNews) Change() http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
+
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
-		if err != nil || id < 1 {
+
+		//checking for a positive id value
+		if id < 1 {
+			response.Error(w, http.StatusBadRequest, model.ErrIDLessOne)
+			return
+		}
+
+		//server unexpected route variable error
+		if err != nil {
 			response.Error(w, http.StatusNotFound, err)
 			return
 		}
@@ -129,12 +137,22 @@ func (h *HandlerNews) Change() http.HandlerFunc {
 		req.Description = r.FormValue("description")
 
 		src, hdr, err := r.FormFile("photo")
-		if err != nil {
-			response.Error(w, http.StatusBadRequest, errors.New("wrong photo format"))
+
+		//file existence check
+		if errors.Is(err, http.ErrMissingFile) {
+			response.Error(w, http.StatusBadRequest, http.ErrMissingFile)
 			return
 		}
+
+		//server unexpected error
+		if err != nil {
+			response.Error(w, http.StatusUnprocessableEntity, err)
+			return
+		}
+
 		object := &model.Photo{
 			Payload: src,
+			Name:    hdr.Filename,
 			Size:    hdr.Size,
 		}
 		defer src.Close()
@@ -147,10 +165,37 @@ func (h *HandlerNews) Change() http.HandlerFunc {
 		}
 
 		if err := h.handler.service.News().Change(r.Context(), n); err != nil {
+			//with wrong file extension
+			if errors.Is(err, model.ErrWrongContentType) {
+				response.Error(w, http.StatusBadRequest, model.ErrWrongContentType)
+				return
+			}
+
+			//with a long file name
+			if errors.Is(err, model.ErrLongFileName) {
+				response.Error(w, http.StatusBadRequest, model.ErrLongFileName)
+				return
+			}
+
+			//with not validated title and/or description
+			if errors.Is(err, model.ErrNewsNotValid) {
+				response.Error(w, http.StatusBadRequest, model.ErrNewsNotValid)
+				return
+			}
+
+			//when there is no news in the database
+			if errors.Is(err, model.ErrNewsNotFound) {
+				response.Error(w, http.StatusBadRequest, model.ErrNewsNotFound)
+				return
+			}
+
+			//server unexpected error
 			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		data := fmt.Sprintf("{News from id: %d has been successfully changed}", id)
+
+		data := fmt.Sprint("{News has been successfully changed}")
+
 		response.Respond(w, http.StatusOK, data)
 	}
 }
@@ -159,15 +204,33 @@ func (h *HandlerNews) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
-		if err != nil || id < 1 {
+
+		//checking for a positive id value
+		if id < 1 {
+			response.Error(w, http.StatusBadRequest, model.ErrIDLessOne)
+			return
+		}
+
+		//server unexpected route variable error
+		if err != nil {
 			response.Error(w, http.StatusNotFound, err)
 			return
 		}
+
 		if err := h.handler.service.News().Delete(r.Context(), id); err != nil {
+			//when there is no news in the database
+			if errors.Is(err, model.ErrNewsNotFound) {
+				response.Error(w, http.StatusBadRequest, model.ErrNewsNotFound)
+				return
+			}
+
+			//server unexpected error
 			response.Error(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		data := fmt.Sprintf("{News from id: %d was successfully deleted}", id)
+
+		data := fmt.Sprint("{News was successfully deleted}")
+
 		response.Respond(w, http.StatusOK, data)
 	}
 }

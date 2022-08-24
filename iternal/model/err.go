@@ -23,9 +23,10 @@ var (
 
 //news errors
 var (
-	ErrWrongContentType         = errors.New("invalid file type, expected png or jpeg")
-	ErrTitleDescriptionNotValid = errors.New("title cannot be empty and must not exceed 50 characters, and description 1500 characters")
-	ErrLongFileName             = errors.New("character limit exceeded in file name")
+	ErrWrongContentType = errors.New("invalid file type, expected png or jpeg")
+	ErrNewsNotValid     = errors.New("client sent not valid news data")
+	ErrLongFileName     = errors.New("character limit exceeded in file name")
+	ErrNewsNotFound     = errors.New("searched news not found")
 )
 
 type Err struct {

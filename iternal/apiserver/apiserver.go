@@ -4,7 +4,7 @@ import (
 	"CIS_Backend_Server/config"
 	"CIS_Backend_Server/iternal/handlers/handlers"
 	"CIS_Backend_Server/iternal/service/service"
-	"CIS_Backend_Server/iternal/storage/dbstorage"
+	"CIS_Backend_Server/iternal/storage/storage"
 	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -34,15 +34,16 @@ func Start(cfg *config.Config, log *log.Logger, router *mux.Router) error {
 	}
 
 	//instantiate storage, service, handlers, server
-	storage := dbstorage.New(db, mc, cfg.JWT, cfg.BucketName)
-	service_ := service.New(storage)
-	handlers_ := handlers.New(service_)
-	srv := serverNew(log, router, handlers_, cfg.SecretKeyAccess)
+	storageNew := storage.New(db, mc, cfg.JWT, cfg.BucketName)
+	serviceNew := service.New(storageNew)
+	handlersNew := handlers.New(serviceNew)
+	srv := serverNew(log, router, handlersNew, cfg.SecretKeyAccess)
 
 	log.Info("Server start on port: ", cfg.BindAddr)
 	return http.ListenAndServe(cfg.BindAddr, srv)
 }
 
+//newDB opening a database according to the specified parameters, checking the connection
 func newDB(pq config.Postgres) (*sql.DB, error) {
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", pq.User, pq.Password, pq.Host, pq.DBName, pq.SSL)
 	db, err := sql.Open("postgres", dbURL)
