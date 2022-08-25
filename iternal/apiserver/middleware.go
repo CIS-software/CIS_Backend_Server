@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // middleware errors
@@ -16,6 +17,16 @@ var (
 	ErrWrongFormat      = errors.New("invalid auth token, does not match the format: Bearer {token-body}")
 	ErrWrongToken       = errors.New("wrong token")
 )
+
+//LogRequest getting basic information about the request in the form of logs, such as method, url, header
+func (s *Server) LogRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		s.log.Infof("Request: Method: %s, URL: %s, Header: %s", r.Method, r.URL.Path, r.Header)
+		next.ServeHTTP(w, r)
+		s.log.Infof("Request time: %s", time.Since(start))
+	})
+}
 
 //JwtAuthentication authorization with jwt tokens
 func (s *Server) JwtAuthentication(next http.Handler) http.Handler {
