@@ -13,7 +13,7 @@ type Service interface {
 
 type NewsService interface {
 	Create(ctx context.Context, news *model.News) error
-	Get(ctx context.Context) ([]model.News, error)
+	Get(ctx context.Context, id int) ([]model.News, error)
 	Change(ctx context.Context, news *model.News) error
 	Delete(ctx context.Context, id int) error
 }

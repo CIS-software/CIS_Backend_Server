@@ -27,6 +27,7 @@ var (
 	ErrNewsNotValid     = errors.New("client sent not valid news data")
 	ErrLongFileName     = errors.New("character limit exceeded in file name")
 	ErrNewsNotFound     = errors.New("searched news not found")
+	ErrNegativeID       = errors.New("negative id")
 )
 
 type Err struct {

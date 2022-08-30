@@ -19,8 +19,8 @@ func (s *NewsService) Create(ctx context.Context, n *model.News) error {
 	return s.service.storage.News().Create(ctx, n)
 }
 
-func (s *NewsService) Get(ctx context.Context) ([]model.News, error) {
-	news, err := s.service.storage.News().Get(ctx)
+func (s *NewsService) Get(ctx context.Context, id int) ([]model.News, error) {
+	news, err := s.service.storage.News().Get(ctx, id)
 
 	//excluding uuid from photo title
 	for i := range news {

@@ -92,7 +92,22 @@ func (h *HandlerNews) Create() http.HandlerFunc {
 
 func (h *HandlerNews) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := h.handler.service.News().Get(r.Context())
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+
+		//checking for a non-negative id value
+		if id < 0 {
+			response.Error(w, http.StatusBadRequest, model.ErrNegativeID)
+			return
+		}
+
+		//server unexpected route variable error
+		if err != nil {
+			response.Error(w, http.StatusNotFound, err)
+			return
+		}
+
+		data, err := h.handler.service.News().Get(r.Context(), id)
 		//when there is no news in the database
 		if errors.Is(err, model.ErrNewsNotFound) {
 			response.Error(w, http.StatusBadRequest, model.ErrNewsNotFound)

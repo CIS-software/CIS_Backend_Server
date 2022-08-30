@@ -40,7 +40,7 @@ func (s *Server) configureRouter() {
 
 	//news URLs
 	s.router.HandleFunc("/news", s.handler.News().Create()).Methods("POST")
-	s.router.HandleFunc("/news", s.handler.News().Get()).Methods("GET")
+	s.router.HandleFunc("/news/{id}", s.handler.News().Get()).Methods("GET")
 	s.router.HandleFunc("/news/{id}", s.handler.News().Change()).Methods("PUT")
 	s.router.HandleFunc("/news/{id}", s.handler.News().Delete()).Methods("DELETE")
 

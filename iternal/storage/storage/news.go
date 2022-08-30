@@ -59,9 +59,16 @@ func (r *NewsRepository) Create(ctx context.Context, n *model.News) error {
 	return err
 }
 
-func (r *NewsRepository) Get(ctx context.Context) (news []model.News, err error) {
-	//getting all the news from the database
-	rows, err := r.storage.db.Query("SELECT * FROM news ORDER BY time_date DESC")
+func (r *NewsRepository) Get(ctx context.Context, id int) (news []model.News, err error) {
+	var rows *sql.Rows
+
+	if id == 1 {
+		//getting the latest 12 news from the database
+		rows, err = r.storage.db.Query("SELECT * FROM news ORDER BY id DESC LIMIT 12")
+	} else {
+		//receiving follow-up news by latest news id from the database
+		rows, err = r.storage.db.Query("SELECT * FROM news WHERE id < $1 ORDER BY id DESC LIMIT 12", id)
+	}
 
 	//checking for data in the database
 	if errors.Is(err, sql.ErrNoRows) {
