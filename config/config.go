@@ -11,7 +11,7 @@ type Config struct {
 type Postgres struct {
 	User     string `env:"USER" env-default:"postgres"`
 	Password string `env:"PASSWORD" env-default:"Jad108fsdlknzc"`
-	Host     string `env:"HOST" env-default:"host.docker.internal:5436"`
+	Host     string `env:"HOST" env-default:"host.docker.internal:5432"`
 	DBName   string `env:"DB_NAME" env-default:"postgres"`
 	SSL      string `env:"SSL" env-default:"disable"`
 }

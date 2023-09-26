@@ -6,9 +6,10 @@ import (
 	"CIS_Backend_Server/iternal/model"
 	"encoding/json"
 	"errors"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type HandlerUser struct {
